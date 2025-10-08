@@ -1,109 +1,88 @@
 import os
 import logging
 import asyncio
-import importlib
-from collections import deque
-from asyncio import Queue
-import random
-import uuid
-import re
-from typing import Union, Optional, AsyncGenerator
 import pytz
 from datetime import date, datetime
 from aiohttp import web
-from pyrogram import Client, __version__, filters, types, utils as pyroutils
-from pyrogram.raw.all import layer
+from pytdbot import Client, types
+
 from plugins import web_server
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, PORT, USER_SESSION, ADMINS
+from info import API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, PORT, ADMINS
 
-# Logging setup
+# ------------------- Logging setup -------------------
 logging.basicConfig(level=logging.INFO)
-logging.getLogger("pyrogram").setLevel(logging.ERROR)
+logger = logging.getLogger("pytdbot")
+logger.setLevel(logging.INFO)
 
-# Adjust Pyrogram chat ID ranges
-pyroutils.MIN_CHAT_ID = -999999999999
-pyroutils.MIN_CHANNEL_ID = -100999999999999
-
+# ------------------- Directories -------------------
 DOWNLOAD_DIR = "/app/downloads"
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+# ------------------- Pytdbot client -------------------
+client = Client(api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-class Bot(Client):
-    def __init__(self):
-        super().__init__(
-            name=SESSION,
-            api_id=API_ID,
-            api_hash=API_HASH,
-            bot_token=BOT_TOKEN,
-            workers=1000,
-            plugins={"root": "plugins"},
-            sleep_threshold=10,
-            max_concurrent_transmissions=6
-        )
+# ------------------- Fast download -------------------
+async def fast_download(message, output_path):
+    try:
+        logger.info(f"📥 Starting download: {output_path}")
+        file_path = await message.download_file(output_path)
+        logger.info(f"✅ Download complete: {file_path}")
+        return file_path
+    except Exception as e:
+        logger.error(f"❌ Download failed: {e}")
+        return None
 
-    async def start(self):
-        await super().start()
+# ------------------- Fast upload -------------------
+async def fast_upload(message, file_path):
+    try:
+        logger.info(f"📤 Starting upload: {file_path}")
+        await message.reply_document(file_path)
+        logger.info(f"✅ Upload complete: {file_path}")
+    except Exception as e:
+        logger.error(f"❌ Upload failed: {e}")
 
-        me = await self.get_me()
-        logging.info(f"🤖 {me.first_name} (@{me.username}) running on Pyrogram v{__version__} (Layer {layer})")
-      
-        tz = pytz.timezone('Asia/Kolkata')
-        today = date.today()
-        now = datetime.now(tz)
-        time_str = now.strftime("%H:%M:%S %p")
+# ------------------- Bot startup log -------------------
+async def on_startup():
+    tz = pytz.timezone('Asia/Kolkata')
+    today = date.today()
+    now = datetime.now(tz)
+    time_str = now.strftime("%H:%M:%S %p")
 
-        await self.send_message(chat_id=LOG_CHANNEL, text=f"✅ Bot Restarted! 📅 Date: {today} 🕒 Time: {time_str}")
+    await client.send_message(LOG_CHANNEL, f"✅ Bot Restarted! 📅 Date: {today} 🕒 Time: {time_str}")
+    logger.info(f"🤖 Bot started and logged to {LOG_CHANNEL}")
 
-        # Setup and start aiohttp web server
-        app_runner = web.AppRunner(await web_server())
-        await app_runner.setup()
-        site = web.TCPSite(app_runner, "0.0.0.0", PORT)
-        await site.start()
+    # Start web server
+    app_runner = web.AppRunner(await web_server())
+    await app_runner.setup()
+    site = web.TCPSite(app_runner, "0.0.0.0", PORT)
+    await site.start()
+    logger.info(f"🌐 Web Server Running on PORT {PORT}")
 
-        logging.info(f"🌐 Web Server Running on PORT {PORT}")
+# ------------------- Message handlers -------------------
+@client.on_message()
+async def handle_messages(message):
+    # Fast download command
+    if message.text and message.text.startswith("/fastdl") and message.reply_to_message:
+        reply = message.reply_to_message
+        if not reply.document and not reply.photo and not reply.video:
+            await message.reply("❌ Reply to a media message to download it!")
+            return
+        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
+        await message.reply("⏳ Downloading with Pytdbot...")
+        await fast_download(reply, file_name)
+        await message.reply(f"✅ Downloaded: {file_name}")
 
-    async def stop(self, *args):
-        await super().stop()
-        logging.info("🛑 Bot Stopped.")
+    # Fast upload command
+    if message.text and message.text.startswith("/fastup"):
+        file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
+        await message.reply("📤 Uploading super-fast with Pytdbot...")
+        await fast_upload(message, file_path)
 
-    async def iter_messages(
-        self,
-        chat_id: Union[int, str],
-        limit: int,
-        offset: int = 0,
-    ) -> Optional[AsyncGenerator["types.Message", None]]:
-        """Iterate through a chat sequentially.
-        This convenience method does the same as repeatedly calling :meth:`~pyrogram.Client.get_messages` in a loop, thus saving
-        you from the hassle of setting up boilerplate code. It is useful for getting the whole chat messages with a
-        single call.
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
-                For your personal cloud (Saved Messages) you can simply use "me" or "self".
-                For a contact that exists in your Telegram address book you can use his phone number (str).
-                
-            limit (``int``):
-                Identifier of the last message to be returned.
-                
-            offset (``int``, *optional*):
-                Identifier of the first message to be returned.
-                Defaults to 0.
-        Returns:
-            ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
-        Example:
-            .. code-block:: python
-                for message in app.iter_messages("pyrogram", 1, 15000):
-                    print(message.text)
-        """
-        current = offset
-        while True:
-            new_diff = min(200, limit - current)
-            if new_diff <= 0:
-                return
-            messages = await self.get_messages(chat_id, list(range(current, current+new_diff+1)))
-            for message in messages:
-                yield message
-                current += 1
+# ------------------- Run client -------------------
+async def main():
+    await client.start()
+    await on_startup()
+    logger.info("Bot is idle...")
+    await client.idle()  # Keep bot running
 
-
-app = Bot()
-app.run()
+asyncio.run(main())
