@@ -61,16 +61,23 @@ async def handle_start(_: Client, message: types.Message):
 # ------------------- Message handlers -------------------
 @client.on_message()
 async def handle_messages(_: Client, message: types.Message):
+    # ---------------- Fast download ----------------
     if message.text and message.text.startswith("/fastdl") and message.reply_to_message_id:
         file_name = os.path.join(DOWNLOAD_DIR, f"fast_{message.reply_to_message_id}.mp4")
         await message.reply_text("⏳ Downloading...")
-        
+
         try:
-            await message.download_file(file_name, reply_to_message_id=message.reply_to_message_id)
+            # client ke download_file method ka use karo
+            await _.download_file(
+                chat_id=message.chat.id,
+                message_id=message.reply_to_message_id,
+                output_path=file_name
+            )
             await message.reply_text(f"✅ Downloaded: {file_name}")
         except Exception as e:
             await message.reply_text(f"❌ Failed to download: {e}")
 
+    # ---------------- Fast upload ----------------
     elif message.text and message.text.startswith("/fastup"):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
         await message.reply_text("📤 Uploading...")
