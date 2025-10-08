@@ -19,7 +19,7 @@ DOWNLOAD_DIR = "/app/downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # ------------------- Pytdbot client -------------------
-client = Client(api_id=API_ID, api_hash=API_HASH, database_encryption_key="sdsffsfafss")
+client = Client(token=BOT_TOKEN, api_id=API_ID, api_hash=API_HASH, files_directory="BotDB", database_encryption_key="sdsffsfafss")
 
 # ------------------- Fast download -------------------
 async def fast_download(message, output_path):
@@ -80,7 +80,7 @@ async def handle_messages(message):
 
 # ------------------- Run client -------------------
 async def main():
-    await client.start(bot_token=BOT_TOKEN)
+    await client.start()
     await on_startup()
     logger.info("Bot is idle...")
     await client.idle()  # Keep bot running
