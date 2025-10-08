@@ -61,30 +61,21 @@ async def handle_start(_: Client, message: types.Message):
 # ------------------- Message handlers -------------------
 @client.on_message()
 async def handle_messages(_: Client, message: types.Message):
-    # ---------------- Fast download ----------------
     if message.text and message.text.startswith("/fastdl") and message.reply_to_message_id:
-        # Replyed message ko fetch karo
-        try:
-            reply = await client.fetch_message(chat_id=message.chat.id, message_id=message.reply_to_message_id)
-        except Exception as e:
-            await message.reply_text(f"❌ Failed to fetch replied message: {e}")
-            return
-
-        # Check karo media hai ya nahi
-        if not (getattr(reply, "document", None) or getattr(reply, "photo", None) or getattr(reply, "video", None)):
-            await message.reply_text("❌ Reply to a media message to download it!")
-            return
-
-        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
+        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{message.reply_to_message_id}.mp4")
         await message.reply_text("⏳ Downloading...")
-        await fast_download(reply, file_name)
-        await message.reply_text(f"✅ Downloaded: {file_name}")
+        
+        try:
+            await message.download_file(file_name, reply_to_message_id=message.reply_to_message_id)
+            await message.reply_text(f"✅ Downloaded: {file_name}")
+        except Exception as e:
+            await message.reply_text(f"❌ Failed to download: {e}")
 
-    # ---------------- Fast upload ----------------
-    if message.text and message.text.startswith("/fastup"):
+    elif message.text and message.text.startswith("/fastup"):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
         await message.reply_text("📤 Uploading...")
         await fast_upload(message, file_path)
+
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
