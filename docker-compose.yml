@@ -1,0 +1,11 @@
+version: '3'
+services:
+  ans-save:
+    build: .
+    container_name: Ans-Save-Bot
+    restart: always
+    volumes:
+      - ./downloads:/app/downloads
+      - .:/app
+    working_dir: /app
+    command: python3 bot.py
