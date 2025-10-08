@@ -60,27 +60,24 @@ async def handle_start(_: Client, message: types.Message):
             )
 # ------------------- Message handlers -------------------
 @client.on_message()
-async def handle_messages(client, message):
-    # Fast download command
+async def handle_messages(_: Client, message: types.Message):
+    # ---------------- Fast download ----------------
     if message.text and message.text.startswith("/fastdl") and message.reply_to_message:
         reply = message.reply_to_message
         if not reply.document and not reply.photo and not reply.video:
-            await client.send_message(
-                chat_id=message.chat.id,
-                text=types.InputMessageText("❌ Reply to a media message to download it!")
-            )
+            await message.reply_text("❌ Reply to a media message to download it!")
             return
-        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
-        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("⏳ Downloading..."))
-        await fast_download(reply, file_name)
-        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText(f"✅ Downloaded: {file_name}"))
 
-    # Fast upload command
+        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
+        await message.reply_text("⏳ Downloading...")
+        await fast_download(reply, file_name)
+        await message.reply_text(f"✅ Downloaded: {file_name}")
+
+    # ---------------- Fast upload ----------------
     if message.text and message.text.startswith("/fastup"):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
-        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("📤 Uploading..."))
+        await message.reply_text("📤 Uploading...")
         await fast_upload(message, file_path)
-
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
