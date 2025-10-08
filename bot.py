@@ -1,6 +1,5 @@
 import os
 import logging
-import asyncio
 import pytz
 from datetime import date, datetime
 from aiohttp import web
@@ -51,14 +50,15 @@ async def fast_upload(message, file_path):
     except Exception as e:
         logger.error(f"❌ Upload failed: {e}")
 
-# ------------------- Bot startup log -------------------
-async def on_startup():
+# ------------------- Startup hook -------------------
+@client.on_ready()
+async def on_ready():
     tz = pytz.timezone('Asia/Kolkata')
     today = date.today()
     now = datetime.now(tz)
     time_str = now.strftime("%H:%M:%S %p")
 
-    # Using Pytdbot way to send text
+    # Send startup log
     await client.send_message(
         chat_id=LOG_CHANNEL,
         text=types.InputMessageText(
@@ -98,22 +98,25 @@ async def handle_messages(message):
             )
             return
         file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
-        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("⏳ Downloading with Pytdbot..."))
+        await client.send_message(
+            chat_id=message.chat.id,
+            text=types.InputMessageText("⏳ Downloading with Pytdbot...")
+        )
         await fast_download(reply, file_name)
-        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText(f"✅ Downloaded: {file_name}"))
+        await client.send_message(
+            chat_id=message.chat.id,
+            text=types.InputMessageText(f"✅ Downloaded: {file_name}")
+        )
 
     # Fast upload command
     if message.text and message.text.startswith("/fastup"):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
-        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("📤 Uploading super-fast with Pytdbot..."))
+        await client.send_message(
+            chat_id=message.chat.id,
+            text=types.InputMessageText("📤 Uploading super-fast with Pytdbot...")
+        )
         await fast_upload(message, file_path)
 
-# ------------------- Run client -------------------
-async def main():
-    await client.start()
-    await on_startup()
-    logger.info("Bot is idle...")
-    await client.idle()  # Keep bot running
-
+# ------------------- Run bot -------------------
 if __name__ == "__main__":
-    asyncio.run(main())
+    client.run()
