@@ -61,18 +61,28 @@ async def handle_start(_: Client, message: types.Message):
 # ------------------- Message handlers -------------------
 @client.on_message()
 async def handle_messages(_: Client, message: types.Message):
+    # Message ki chat_id aur text nikalna
+    chat_id = message.chat_id
+    text = ""
+    if isinstance(message.content, types.MessageText):
+        text = message.content.text
+
     # ---------------- Fast download ----------------
-    if message.text and message.text.startswith("/fastdl"):
+    if text.startswith("/fastdl"):
         if not getattr(message, "reply_to_message_id", None):
-            await message.reply_text("❌ Reply to a media message to download it!")
+            await _.invoke({
+                "@type": "sendMessage",
+                "chat_id": chat_id,
+                "input_message_content": {
+                    "@type": "inputMessageText",
+                    "text": "❌ Reply to a media message to download it!"
+                }
+            })
             return
 
-        # Replyed message content
         reply_id = message.reply_to_message_id
-        chat_id = message.chat.id
-
-        # TDLib me getMessage use karke replied message lo
-        reply_update = await _.invoke({
+        # Get replied message
+        reply = await _.invoke({
             "@type": "getMessage",
             "chat_id": chat_id,
             "message_id": reply_id
@@ -80,33 +90,68 @@ async def handle_messages(_: Client, message: types.Message):
 
         # File id nikalna
         file_id = None
-        content_type = reply_update.get("content", {}).get("@type", "")
+        content_type = reply.get("content", {}).get("@type", "")
         if content_type == "messageDocument":
-            file_id = reply_update["content"]["document"]["id"]
+            file_id = reply["content"]["document"]["id"]
         elif content_type == "messageVideo":
-            file_id = reply_update["content"]["video"]["id"]
+            file_id = reply["content"]["video"]["id"]
         elif content_type == "messagePhoto":
-            # last size ka photo id
-            file_id = reply_update["content"]["sizes"][-1]["photo"]["id"]
+            file_id = reply["content"]["sizes"][-1]["photo"]["id"]
         else:
-            await message.reply_text("❌ Unsupported media type")
+            await _.invoke({
+                "@type": "sendMessage",
+                "chat_id": chat_id,
+                "input_message_content": {
+                    "@type": "inputMessageText",
+                    "text": "❌ Unsupported media type"
+                }
+            })
             return
 
         file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply_id}.mp4")
-        await message.reply_text("⏳ Downloading...")
+        await _.invoke({
+            "@type": "sendMessage",
+            "chat_id": chat_id,
+            "input_message_content": {
+                "@type": "inputMessageText",
+                "text": "⏳ Downloading..."
+            }
+        })
 
         try:
             file_info = await _.downloadFile(file_id=file_id, priority=1, synchronous=True)
             downloaded_path = file_info.local.path
-            await message.reply_text(f"✅ Downloaded: {downloaded_path}")
+            await _.invoke({
+                "@type": "sendMessage",
+                "chat_id": chat_id,
+                "input_message_content": {
+                    "@type": "inputMessageText",
+                    "text": f"✅ Downloaded: {downloaded_path}"
+                }
+            })
         except Exception as e:
-            await message.reply_text(f"❌ Failed to download: {e}")
+            await _.invoke({
+                "@type": "sendMessage",
+                "chat_id": chat_id,
+                "input_message_content": {
+                    "@type": "inputMessageText",
+                    "text": f"❌ Failed to download: {e}"
+                }
+            })
 
     # ---------------- Fast upload ----------------
-    elif message.text and message.text.startswith("/fastup"):
-        file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
-        await message.reply_text("📤 Uploading...")
+    elif text.startswith("/fastup"):
+        file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")
+        await _.invoke({
+            "@type": "sendMessage",
+            "chat_id": chat_id,
+            "input_message_content": {
+                "@type": "inputMessageText",
+                "text": "📤 Uploading..."
+            }
+        })
         await fast_upload(message, file_path)
+
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
