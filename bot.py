@@ -59,15 +59,25 @@ async def on_startup():
     logger.info(f"🌐 Web Server Running on PORT {PORT}")
 
 # ------------------- Message handlers -------------------
+@client.on_message()
+async def handle_messages(message):
+    # Fast download command
+    if message.text and message.text.startswith("/fastdl") and message.reply_to_message:
+        reply = message.reply_to_message
+        if not reply.document and not reply.photo and not reply.video:
+            await message.reply("❌ Reply to a media message to download it!")
+            return
+        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
+        await message.reply("⏳ Downloading with Pytdbot...")
+        await fast_download(reply, file_name)
+        await message.reply(f"✅ Downloaded: {file_name}")
 
-@client.on_message(filters=types.InputTextMessageContent)  # Text messages
-async def start_command(message: types.Message):
-    if message.text and message.text.lower() == "/start":
-        await client.send_message(
-            chat_id=message.chat.id,
-            text="👋 Hello! I am your fast Telegram bot.\n\nUse /fastdl to download media quickly."
-        )
-        
+    # Fast upload command
+    if message.text and message.text.startswith("/fastup"):
+        file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
+        await message.reply("📤 Uploading super-fast with Pytdbot...")
+        await fast_upload(message, file_path)
+
 # ------------------- Run client -------------------
 async def main():
     await client.start()
