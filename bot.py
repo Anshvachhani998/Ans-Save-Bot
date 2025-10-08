@@ -54,13 +54,12 @@ async def fast_upload(message, file_path):
 @client.on_message()
 async def handle_start(client, message):
     if message.text and message.text.lower() == "/start":
-        await client.send_message(
+        await client.send_message_content(
             chat_id=message.chat.id,
-            text=types.InputMessageText(
+            content=types.InputMessageText(
                 text="👋 Hello! I am your fast Pytdbot bot.\n\nUse /fastdl to download media quickly."
             )
         )
-
 # ------------------- Message handlers -------------------
 @client.on_message()
 async def handle_messages(client, message):
