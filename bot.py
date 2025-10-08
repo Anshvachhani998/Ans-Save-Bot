@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 import pytz
 from datetime import date, datetime
 from aiohttp import web
@@ -50,9 +51,8 @@ async def fast_upload(message, file_path):
     except Exception as e:
         logger.error(f"❌ Upload failed: {e}")
 
-# ------------------- Startup hook -------------------
-@client.on_ready()
-async def on_ready():
+# ------------------- Bot startup log -------------------
+async def bot_startup():
     tz = pytz.timezone('Asia/Kolkata')
     today = date.today()
     now = datetime.now(tz)
@@ -119,4 +119,11 @@ async def handle_messages(message):
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
-    client.run()
+    # Start bot and run startup tasks after start
+    async def main():
+        await client.start()
+        await bot_startup()   # manually call startup tasks
+        logger.info("Bot is idle...")
+        await client.idle()
+
+    client.loop.run_until_complete(main())
