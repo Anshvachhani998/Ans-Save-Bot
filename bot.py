@@ -63,10 +63,13 @@ async def handle_start(_: Client, message: types.Message):
 async def handle_messages(_: Client, message: types.Message):
     # ---------------- Fast download ----------------
     if message.text and message.text.startswith("/fastdl") and message.reply_to_message_id:
-        # Replyed message ko fetch karo
-        reply = await client.get_message(chat_id=message.chat.id, message_id=message.reply_to_message_id)
+        # Pytdbot me reply message fetch karne ka sahi tariqa
+        reply = message.reply_to_message
+        if not reply:
+            # Agar reply object null hai, to fetch karen
+            reply = await client.fetch_message(chat_id=message.chat.id, message_id=message.reply_to_message_id)
         
-        if not (reply.document or reply.photo or reply.video):
+        if not (getattr(reply, "document", None) or getattr(reply, "photo", None) or getattr(reply, "video", None)):
             await message.reply_text("❌ Reply to a media message to download it!")
             return
 
