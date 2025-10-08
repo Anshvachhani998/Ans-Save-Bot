@@ -62,9 +62,11 @@ async def handle_start(_: Client, message: types.Message):
 @client.on_message()
 async def handle_messages(_: Client, message: types.Message):
     # ---------------- Fast download ----------------
-    if message.text and message.text.startswith("/fastdl") and message.reply_to_message:
-        reply = message.reply_to_message
-        if not reply.document and not reply.photo and not reply.video:
+    if message.text and message.text.startswith("/fastdl") and message.reply_to_message_id:
+        # Replyed message ko fetch karo
+        reply = await client.get_message(chat_id=message.chat.id, message_id=message.reply_to_message_id)
+        
+        if not (reply.document or reply.photo or reply.video):
             await message.reply_text("❌ Reply to a media message to download it!")
             return
 
