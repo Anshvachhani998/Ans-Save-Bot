@@ -18,4 +18,6 @@ RUN pip install telethon
 RUN pip install git+https://github.com/pytdbot/client.git
 RUN pip install -r requirements.txt
 
+RUN pip install --upgrade tdjson
+
 CMD ["python", "bot.py"]
