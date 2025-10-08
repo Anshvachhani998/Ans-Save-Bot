@@ -1,6 +1,5 @@
 import os
 import logging
-import asyncio
 import pytz
 from datetime import date, datetime
 from aiohttp import web
@@ -27,7 +26,7 @@ client = Client(
     database_encryption_key="sdsffsfafss"
 )
 
-# ------------------- Fast download -------------------
+# ------------------- Fast download/upload -------------------
 async def fast_download(message, output_path):
     try:
         logger.info(f"📥 Starting download: {output_path}")
@@ -38,7 +37,6 @@ async def fast_download(message, output_path):
         logger.error(f"❌ Download failed: {e}")
         return None
 
-# ------------------- Fast upload -------------------
 async def fast_upload(message, file_path):
     try:
         logger.info(f"📤 Starting upload: {file_path}")
@@ -51,28 +49,7 @@ async def fast_upload(message, file_path):
     except Exception as e:
         logger.error(f"❌ Upload failed: {e}")
 
-# ------------------- Bot startup log -------------------
-async def bot_startup():
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
-    now = datetime.now(tz)
-    time_str = now.strftime("%H:%M:%S %p")
-
-    # Send startup log
-    await client.send_message(
-        chat_id=LOG_CHANNEL,
-        text=types.InputMessageText(
-            text=f"✅ Bot Restarted! 📅 Date: {today} 🕒 Time: {time_str}"
-        )
-    )
-    logger.info(f"🤖 Bot started and logged to {LOG_CHANNEL}")
-
-    # Start web server
-    app_runner = web.AppRunner(await web_server())
-    await app_runner.setup()
-    site = web.TCPSite(app_runner, "0.0.0.0", PORT)
-    await site.start()
-    logger.info(f"🌐 Web Server Running on PORT {PORT}")
+# ------------------- Startup handler -------------------
 
 # ------------------- /start command -------------------
 @client.on_message()
@@ -98,32 +75,16 @@ async def handle_messages(message):
             )
             return
         file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
-        await client.send_message(
-            chat_id=message.chat.id,
-            text=types.InputMessageText("⏳ Downloading with Pytdbot...")
-        )
+        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("⏳ Downloading..."))
         await fast_download(reply, file_name)
-        await client.send_message(
-            chat_id=message.chat.id,
-            text=types.InputMessageText(f"✅ Downloaded: {file_name}")
-        )
+        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText(f"✅ Downloaded: {file_name}"))
 
     # Fast upload command
     if message.text and message.text.startswith("/fastup"):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
-        await client.send_message(
-            chat_id=message.chat.id,
-            text=types.InputMessageText("📤 Uploading super-fast with Pytdbot...")
-        )
+        await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("📤 Uploading..."))
         await fast_upload(message, file_path)
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
-    # Start bot and run startup tasks after start
-    async def main():
-        await client.start()
-        await bot_startup()   # manually call startup tasks
-        logger.info("Bot is idle...")
-        await client.idle()
-
-    client.loop.run_until_complete(main())
+    client.run()
