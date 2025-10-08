@@ -50,9 +50,9 @@ async def fast_upload(message, file_path):
         logger.error(f"❌ Upload failed: {e}")
 
 # ------------------- /start command -------------------
+# ------------------- /start command -------------------
 @client.on_message()
-async def handle_start(client, update):
-    message = update.message
+async def handle_start(client, message):
     if message.text and message.text.lower() == "/start":
         await client.send_message(
             chat_id=message.chat.id,
@@ -63,9 +63,7 @@ async def handle_start(client, update):
 
 # ------------------- Message handlers -------------------
 @client.on_message()
-async def handle_messages(client, update):
-    message = update.message
-
+async def handle_messages(client, message):
     # Fast download command
     if message.text and message.text.startswith("/fastdl") and message.reply_to_message:
         reply = message.reply_to_message
@@ -85,6 +83,7 @@ async def handle_messages(client, update):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
         await client.send_message(chat_id=message.chat.id, text=types.InputMessageText("📤 Uploading..."))
         await fast_upload(message, file_path)
+
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
