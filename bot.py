@@ -19,7 +19,7 @@ DOWNLOAD_DIR = "/app/downloads"
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # ------------------- Pytdbot client -------------------
-client = Client(api_id=API_ID, api_hash=API_HASH)
+client = Client(api_id=API_ID, api_hash=API_HASH, database_encryption_key="sdsffsfafss")
 
 # ------------------- Fast download -------------------
 async def fast_download(message, output_path):
