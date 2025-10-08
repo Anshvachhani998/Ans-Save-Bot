@@ -3,8 +3,8 @@
 import os
 
 SESSION = "savebot"
-API_ID = int(os.getenv("API_ID", "8012239"))
-API_HASH = os.getenv("API_HASH", "171e6f1bf66ed8dcc5140fbe827b6b08")
+API_ID = int(os.getenv("API_ID", "29256205"))
+API_HASH = os.getenv("API_HASH", "0c4124e19f592dc4290c035f4814b9b9")
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8272470118:AAFMX8b4m594Zra8tpT1_lwf9e-Sp2EeWPc")
 LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1003003594014"))
 DUMP_CHANNEL_ID = int(os.getenv("DUMP_CHANNEL_ID", "-1002890289206"))
