@@ -63,17 +63,28 @@ async def handle_start(_: Client, message: types.Message):
 async def handle_messages(_: Client, message: types.Message):
     # ---------------- Fast download ----------------
     if message.text and message.text.startswith("/fastdl") and message.reply_to_message_id:
-        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{message.reply_to_message_id}.mp4")
         await message.reply_text("⏳ Downloading...")
 
+        # Fetch replied message
+        reply = await _.fetch_message(chat_id=message.chat.id, message_id=message.reply_to_message_id)
+
+        # Get file_id from message content
+        if isinstance(reply.content, types.MessageDocument):
+            file_id = reply.content.document.id
+        elif isinstance(reply.content, types.MessageVideo):
+            file_id = reply.content.video.id
+        elif isinstance(reply.content, types.MessagePhoto):
+            file_id = reply.content.sizes[-1].photo.id
+        else:
+            await message.reply_text("❌ Unsupported media type")
+            return
+
+        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
+
         try:
-            # client ke download_file method ka use karo
-            await _.download_file(
-                chat_id=message.chat.id,
-                message_id=message.reply_to_message_id,
-                output_path=file_name
-            )
-            await message.reply_text(f"✅ Downloaded: {file_name}")
+            file_info = await _.downloadFile(file_id=file_id, priority=1, synchronous=True)
+            downloaded_path = file_info.local.path
+            await message.reply_text(f"✅ Downloaded: {downloaded_path}")
         except Exception as e:
             await message.reply_text(f"❌ Failed to download: {e}")
 
@@ -82,6 +93,7 @@ async def handle_messages(_: Client, message: types.Message):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
         await message.reply_text("📤 Uploading...")
         await fast_upload(message, file_path)
+
 
 
 # ------------------- Run bot -------------------
