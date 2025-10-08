@@ -62,24 +62,38 @@ async def handle_start(_: Client, message: types.Message):
 @client.on_message()
 async def handle_messages(_: Client, message: types.Message):
     # ---------------- Fast download ----------------
-    if message.text and message.text.startswith("/fastdl") and message.reply_to_message_id:
-        await message.reply_text("⏳ Downloading...")
+    if message.text and message.text.startswith("/fastdl"):
+        if not getattr(message, "reply_to_message_id", None):
+            await message.reply_text("❌ Reply to a media message to download it!")
+            return
 
-        # Fetch replied message
-        reply = await _.fetch_message(chat_id=message.chat.id, message_id=message.reply_to_message_id)
+        # Replyed message content
+        reply_id = message.reply_to_message_id
+        chat_id = message.chat.id
 
-        # Get file_id from message content
-        if isinstance(reply.content, types.MessageDocument):
-            file_id = reply.content.document.id
-        elif isinstance(reply.content, types.MessageVideo):
-            file_id = reply.content.video.id
-        elif isinstance(reply.content, types.MessagePhoto):
-            file_id = reply.content.sizes[-1].photo.id
+        # TDLib me getMessage use karke replied message lo
+        reply_update = await _.invoke({
+            "@type": "getMessage",
+            "chat_id": chat_id,
+            "message_id": reply_id
+        })
+
+        # File id nikalna
+        file_id = None
+        content_type = reply_update.get("content", {}).get("@type", "")
+        if content_type == "messageDocument":
+            file_id = reply_update["content"]["document"]["id"]
+        elif content_type == "messageVideo":
+            file_id = reply_update["content"]["video"]["id"]
+        elif content_type == "messagePhoto":
+            # last size ka photo id
+            file_id = reply_update["content"]["sizes"][-1]["photo"]["id"]
         else:
             await message.reply_text("❌ Unsupported media type")
             return
 
-        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply.id}.mp4")
+        file_name = os.path.join(DOWNLOAD_DIR, f"fast_{reply_id}.mp4")
+        await message.reply_text("⏳ Downloading...")
 
         try:
             file_info = await _.downloadFile(file_id=file_id, priority=1, synchronous=True)
@@ -93,8 +107,6 @@ async def handle_messages(_: Client, message: types.Message):
         file_path = os.path.join(DOWNLOAD_DIR, "sample.mp4")  # replace with actual file
         await message.reply_text("📤 Uploading...")
         await fast_upload(message, file_path)
-
-
 
 # ------------------- Run bot -------------------
 if __name__ == "__main__":
