@@ -63,6 +63,11 @@ from pyrogram.types import Message
 
 async def progress(current, total, status_message: Message, stage: str):
     import time
+    user_id = status_message.chat.id  # Or pass user_id if needed
+
+    # Check if batch is cancelled
+    if batch_temp.IS_BATCH.get(user_id):
+        raise asyncio.CancelledError("Cancelled by user")  # This stops download/upload immediately
 
     now = time.time()
     if not hasattr(status_message, "start_time"):
@@ -94,6 +99,7 @@ async def progress(current, total, status_message: Message, stage: str):
             status_message.last_edit = now
         except:
             pass
+
 
 
 def humanbytes(size):
