@@ -356,7 +356,7 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
 
     # 🟢 Check file size first
     file_size = getattr(msg.document or msg.video or msg.audio or msg.animation, "file_size", None)
-    MAX_SIZE = 4 * 1024 * 1024 * 1024  # 4GB in bytes
+    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 4GB in bytes
 
     if file_size and file_size > MAX_SIZE:
         await client.send_message(
