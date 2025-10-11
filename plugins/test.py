@@ -186,7 +186,7 @@ async def save(client: Client, message: Message):
 
             await client.send_message(
                 message.chat.id,
-                "**Chat Joined**",
+                "**Chat Joined Successfully ✅**",
                 reply_to_message_id=message.id
             )
 
@@ -226,67 +226,68 @@ async def save(client: Client, message: Message):
             if batch_temp.IS_BATCH.get(message.from_user.id):
                 break
 
-            # LOGIN_SYSTEM True => user session based
-            if LOGIN_SYSTEM == True:
-                user_data = await db.get_session(message.from_user.id)
-                if user_data is None:
-                    await message.reply("**For Downloading Restricted Content You Have To /login First.**")
-                    batch_temp.IS_BATCH[message.from_user.id] = True
-                    return
+            acc = None
 
-                try:
-                    acc = Client(
-                        "saverestricted",
-                        session_string=user_data,
-                        api_hash=API_HASH,
-                        api_id=API_ID
-                    )
-                    await acc.start()
-                except:
-                    batch_temp.IS_BATCH[message.from_user.id] = True
-                    return await message.reply(
-                        "**Your Login Session Expired. So /logout First Then Login Again By - /login**"
-                    )
+            # 🟢 PRIVATE or BOT LINKS (need login/session)
+            if "https://t.me/c/" in message.text or "https://t.me/b/" in message.text:
+                if LOGIN_SYSTEM == True:
+                    user_data = await db.get_session(message.from_user.id)
+                    if user_data is None:
+                        await message.reply("**For Downloading Restricted Content You Have To /login First.**")
+                        batch_temp.IS_BATCH[message.from_user.id] = True
+                        return
 
-            # LOGIN_SYSTEM False => static session
-            else:
-                if TechVJUser is None:
-                    batch_temp.IS_BATCH[message.from_user.id] = True
-                    await client.send_message(
-                        message.chat.id,
-                        "**String Session is not Set**",
-                        reply_to_message_id=message.id
-                    )
-                    return
-                acc = TechVJUser
-
-            # Private chat link
-            if "https://t.me/c/" in message.text:
-                chatid = int("-100" + datas[4])
-                try:
-                    await handle_private(client, acc, message, chatid, msgid)
-                except Exception as e:
-                    if ERROR_MESSAGE:
+                    try:
+                        acc = Client(
+                            "saverestricted",
+                            session_string=user_data,
+                            api_hash=API_HASH,
+                            api_id=API_ID
+                        )
+                        await acc.start()
+                    except Exception:
+                        batch_temp.IS_BATCH[message.from_user.id] = True
+                        return await message.reply(
+                            "**Your Login Session Expired. So /logout First Then Login Again By - /login**"
+                        )
+                else:
+                    if TechVJUser is None:
+                        batch_temp.IS_BATCH[message.from_user.id] = True
                         await client.send_message(
                             message.chat.id,
-                            f"Error: {e}",
+                            "**String Session is not Set**",
                             reply_to_message_id=message.id
                         )
+                        return
+                    acc = TechVJUser
 
-            # Bot link
-            elif "https://t.me/b/" in message.text:
-                username = datas[4]
-                try:
-                    await handle_private(client, acc, message, username, msgid)
-                except Exception as e:
-                    if ERROR_MESSAGE:
-                        await client.send_message(
-                            message.chat.id,
-                            f"Error: {e}",
-                            reply_to_message_id=message.id
-                        )
+                # Private chat link
+                if "https://t.me/c/" in message.text:
+                    chatid = int("-100" + datas[4])
+                    try:
+                        await handle_private(client, acc, message, chatid, msgid)
+                    except Exception as e:
+                        if ERROR_MESSAGE:
+                            await client.send_message(
+                                message.chat.id,
+                                f"Error: {e}",
+                                reply_to_message_id=message.id
+                            )
 
-            # Public link
+                # Bot link
+                elif "https://t.me/b/" in message.text:
+                    username = datas[4]
+                    try:
+                        await handle_private(client, acc, message, username, msgid)
+                    except Exception as e:
+                        if ERROR_MESSAGE:
+                            await client.send_message(
+                                message.chat.id,
+                                f"Error: {e}",
+                                reply_to_message_id=message.id
+                            )
+
+            # 🔵 PUBLIC LINKS (no login/session needed)
             else:
                 username = datas[3]
                 try:
@@ -294,7 +295,7 @@ async def save(client: Client, message: Message):
                 except UsernameNotOccupied:
                     await client.send_message(
                         message.chat.id,
-                        "The username is not occupied by anyone",
+                        "The username is not occupied by anyone.",
                         reply_to_message_id=message.id
                     )
                     return
@@ -306,9 +307,10 @@ async def save(client: Client, message: Message):
                         msg.id,
                         reply_to_message_id=message.id
                     )
-                except:
+                except Exception:
                     try:
-                        await handle_private(client, acc, message, username, msgid)
+                        if TechVJUser:
+                            await handle_private(client, TechVJUser, message, username, msgid)
                     except Exception as e:
                         if ERROR_MESSAGE:
                             await client.send_message(
