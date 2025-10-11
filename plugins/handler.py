@@ -355,8 +355,8 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
         return
 
     # 🟢 Check file size first
-    file_size = getattr(msg.document or msg.video or msg.audio or msg.animation, "file_size", None)
-    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 4GB in bytes
+    file_size = getattr(msg.document or msg.video or msg.audio or msg.animation or msg.photo, "file_size", None)
+    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 4GB
 
     if file_size and file_size > MAX_SIZE:
         await client.send_message(
@@ -371,7 +371,13 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
     os.makedirs(user_download_dir, exist_ok=True)
 
     # Use original filename if exists
-    filename = getattr(msg.document or msg.video or msg.audio, "file_name", f"{msg.id}_file")
+    filename = getattr(msg.document or msg.video or msg.audio, "file_name", None)
+    if msg_type == "Photo":
+        filename = f"{msg.id}.jpg"  # photo extension safe
+
+    if not filename:
+        filename = f"{msg.id}_file"
+
     file_path = os.path.join(user_download_dir, filename)
 
     # Show downloading status
@@ -449,7 +455,6 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
             os.remove(file)
         if thumb and os.path.exists(thumb):
             os.remove(thumb)
-        # Delete the progress message
         try:
             await smsg.delete()
         except: pass
