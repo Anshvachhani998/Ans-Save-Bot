@@ -2,6 +2,21 @@
 
 import os
 
+LOGIN_SYSTEM = bool(os.environ.get('LOGIN_SYSTEM', True)) # True or False
+
+STRING_SESSION = ""
+
+
+if LOGIN_SYSTEM == False:
+    # if login system is false then fill your tg account session below 
+    STRING_SESSION = os.environ.get("STRING_SESSION", "")
+
+ERROR_MESSAGE = bool(os.environ.get('ERROR_MESSAGE', True))
+
+DB_URI = os.environ.get("DB_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority") # Warning - Give Db uri in deploy server environment variable, don't give in repo.
+DB_NAME = os.environ.get("DB_NAME", "vjsavecontentbot")
+
+
 SESSION = "savebot"
 API_ID = int(os.getenv("API_ID", "29256205"))
 API_HASH = os.getenv("API_HASH", "0c4124e19f592dc4290c035f4814b9b9")
