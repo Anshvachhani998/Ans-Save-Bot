@@ -11,10 +11,6 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from info import LOG_CHANNEL, ADMINS, BOT_TOKEN
 
 
-@Client.on_message(filters.command("start"))
-async def start(client, message):
-    await message.reply_text("👋 Hello! Bot is running successfully!")
-
 
 @Client.on_message(filters.command("restart"))
 async def git_pull(client, message):
