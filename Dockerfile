@@ -3,7 +3,6 @@ FROM python:3.10-slim
 WORKDIR /app
 
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     aria2 \
@@ -14,10 +13,7 @@ RUN apt-get update && apt-get install -y \
 COPY . .
 
 
-RUN pip install telethon
-RUN pip install git+https://github.com/pytdbot/client.git
 RUN pip install -r requirements.txt
 
-RUN pip install --upgrade tdjson
 
 CMD ["python", "bot.py"]
