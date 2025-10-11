@@ -335,6 +335,12 @@ async def save(client: Client, message: Message):
 
 # handle private with batch updates
 async def handle_private(client, acc, message: Message, chatid: int, msgid: int, batch_msg=None, idx=None, total=None):
+    user_id = message.from_user.id
+
+    # Check if batch is cancelled before starting
+    if batch_temp.IS_BATCH.get(user_id):
+        return  # Stop immediately
+
     try:
         msg: Message = await acc.get_messages(chatid, msgid)
         if msg is None or msg.empty:
@@ -352,30 +358,27 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int,
 
     # 📩 Text Message
     if msg_type == "Text":
+        if batch_temp.IS_BATCH.get(user_id):
+            return
         try:
-            await client.send_message(
-                chat, msg.text, entities=msg.entities,
-                reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML
-            )
+            await client.send_message(chat, msg.text, entities=msg.entities,
+                                      reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
         except Exception as e:
             if ERROR_MESSAGE:
                 await client.send_message(chat, f"Error: {e}", reply_to_message_id=message.id)
         return
 
-    # 🟢 Check file size first
+    # 🟢 Check file size
     file_size = getattr(msg.document or msg.video or msg.audio or msg.animation or msg.photo, "file_size", None)
-    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 2GB (update if needed)
-
+    MAX_SIZE = 2 * 1024 * 1024 * 1024
     if file_size and file_size > MAX_SIZE:
-        await client.send_message(
-            chat,
-            f"❌ Cannot download/upload this file because its size is {humanbytes(file_size)}, which is over the 2GB limit.",
-            reply_to_message_id=message.id
-        )
+        await client.send_message(chat,
+                                  f"❌ Cannot download/upload this file because its size is {humanbytes(file_size)}, over limit.",
+                                  reply_to_message_id=message.id)
         return
 
-    # 🟢 Prepare download folder
-    user_download_dir = f"downloads/{message.from_user.id}"
+    # 🟢 Prepare folder
+    user_download_dir = f"downloads/{user_id}"
     os.makedirs(user_download_dir, exist_ok=True)
 
     filename = getattr(msg.document or msg.video or msg.audio, "file_name", None)
@@ -386,10 +389,14 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int,
 
     file_path = os.path.join(user_download_dir, filename)
 
-    # Show downloading status
     smsg = await client.send_message(chat, f"⏳ Downloading Message ID: {msgid}", reply_to_message_id=message.id)
 
+    # Download with periodic cancel check
     try:
+        async def cancel_check(current, total_bytes):
+            if batch_temp.IS_BATCH.get(user_id):
+                raise asyncio.CancelledError("Cancelled by user")  # Stop download
+
         file = await acc.download_media(
             msg,
             file_name=file_path,
@@ -397,24 +404,32 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int,
             progress_args=[smsg, "download"],
             in_memory=False
         )
+    except asyncio.CancelledError:
+        await smsg.edit_text(f"❌ Download cancelled for Message ID: {msgid}")
+        return
     except Exception as e:
         if ERROR_MESSAGE:
             await client.send_message(chat, f"Error downloading: {e}", reply_to_message_id=message.id)
         await smsg.delete()
         return
 
-    # Upload the file
+    # Upload
     caption = getattr(msg, "caption", None)
     thumb = None
 
     try:
+        if batch_temp.IS_BATCH.get(user_id):
+            await smsg.edit_text(f"❌ Upload cancelled for Message ID: {msgid}")
+            return
+
         if msg_type == "Document":
             if getattr(msg.document, "thumbs", None):
                 try:
                     thumb = await acc.download_media(msg.document.thumbs[0].file_id)
                 except: pass
-            await client.send_document(chat, file, thumb=thumb, caption=caption, reply_to_message_id=message.id,
-                                       parse_mode=enums.ParseMode.HTML, progress=progress, progress_args=[smsg, "upload"])
+            await client.send_document(chat, file, thumb=thumb, caption=caption,
+                                       reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML,
+                                       progress=progress, progress_args=[smsg, "upload"])
         elif msg_type == "Video":
             if getattr(msg.video, "thumbs", None):
                 try:
@@ -441,14 +456,6 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int,
         elif msg_type == "Photo":
             await client.send_photo(chat, file, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
 
-        # Update batch message on successful upload
-        if batch_msg and idx and total:
-            bar_len = 20
-            progress_ratio = idx / total
-            filled = int(progress_ratio * bar_len)
-            bar = "▰" * filled + "▱" * (bar_len - filled)
-            await batch_msg.edit_text(f"✅ Uploaded Message ID: {msgid}\nProgress: {bar} {idx}/{total}")
-
     except Exception as e:
         if ERROR_MESSAGE:
             await client.send_message(chat, f"Error uploading: {e}", reply_to_message_id=message.id)
@@ -461,7 +468,6 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int,
         try:
             await smsg.delete()
         except: pass
-
 
 
 # get the type of message
