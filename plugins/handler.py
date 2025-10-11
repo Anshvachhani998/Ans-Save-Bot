@@ -162,7 +162,6 @@ async def upstatus(client, statusfile, message, chat):
 async def save(client: Client, message: Message):
     # Joining chats (for invite links)
     if ("https://t.me/+" in message.text or "https://t.me/joinchat/" in message.text) and LOGIN_SYSTEM == False:
-
         if TechVJUser is None:
             await client.send_message(
                 message.chat.id,
@@ -220,21 +219,34 @@ async def save(client: Client, message: Message):
 
         batch_temp.IS_BATCH[message.from_user.id] = False
 
-        for msgid in range(fromID, toID + 1):
+        # Send initial batch message
+        batch_msg = await client.send_message(
+            message.chat.id,
+            f"🟢 Batch Started\nProcessing messages {fromID} to {toID}..."
+        )
+
+        total = toID - fromID + 1
+        for idx, msgid in enumerate(range(fromID, toID + 1), 1):
             if batch_temp.IS_BATCH.get(message.from_user.id):
                 break
 
             acc = None
 
-            # 🟢 PRIVATE or BOT LINKS (need login/session)
+            # Update batch progress
+            bar_len = 20
+            progress_ratio = idx / total
+            filled = int(progress_ratio * bar_len)
+            bar = "▰" * filled + "▱" * (bar_len - filled)
+            await batch_msg.edit_text(f"Processing: {bar} {idx}/{total} (Message ID: {msgid})")
+
+            # 🟢 PRIVATE or BOT LINKS
             if "https://t.me/c/" in message.text or "https://t.me/b/" in message.text:
-                if LOGIN_SYSTEM == True:
+                if LOGIN_SYSTEM:
                     user_data = await db.get_session(message.from_user.id)
                     if user_data is None:
                         await message.reply("**For Downloading Restricted Content You Have To /login First.**")
                         batch_temp.IS_BATCH[message.from_user.id] = True
                         return
-
                     try:
                         acc = Client(
                             "saverestricted",
@@ -259,11 +271,10 @@ async def save(client: Client, message: Message):
                         return
                     acc = TechVJUser
 
-                # Private chat link
                 if "https://t.me/c/" in message.text:
                     chatid = int("-100" + datas[4])
                     try:
-                        await handle_private(client, acc, message, chatid, msgid)
+                        await handle_private(client, acc, message, chatid, msgid, batch_msg, idx, total)
                     except Exception as e:
                         if ERROR_MESSAGE:
                             await client.send_message(
@@ -272,11 +283,10 @@ async def save(client: Client, message: Message):
                                 reply_to_message_id=message.id
                             )
 
-                # Bot link
                 elif "https://t.me/b/" in message.text:
                     username = datas[4]
                     try:
-                        await handle_private(client, acc, message, username, msgid)
+                        await handle_private(client, acc, message, username, msgid, batch_msg, idx, total)
                     except Exception as e:
                         if ERROR_MESSAGE:
                             await client.send_message(
@@ -285,7 +295,7 @@ async def save(client: Client, message: Message):
                                 reply_to_message_id=message.id
                             )
 
-            # 🔵 PUBLIC LINKS (no login/session needed)
+            # 🔵 PUBLIC LINKS
             else:
                 username = datas[3]
                 try:
@@ -297,7 +307,6 @@ async def save(client: Client, message: Message):
                         reply_to_message_id=message.id
                     )
                     return
-
                 try:
                     await client.copy_message(
                         message.chat.id,
@@ -308,7 +317,7 @@ async def save(client: Client, message: Message):
                 except Exception:
                     try:
                         if TechVJUser:
-                            await handle_private(client, TechVJUser, message, username, msgid)
+                            await handle_private(client, TechVJUser, message, username, msgid, batch_msg, idx, total)
                     except Exception as e:
                         if ERROR_MESSAGE:
                             await client.send_message(
@@ -317,13 +326,15 @@ async def save(client: Client, message: Message):
                                 reply_to_message_id=message.id
                             )
 
-            # Wait before next message (avoid FloodWait)
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)  # Reduce sleep a bit for smoother progress
 
+        # Batch Completed
+        await batch_msg.edit_text(f"✅ Batch Completed\nTotal Messages: {total}")
         batch_temp.IS_BATCH[message.from_user.id] = True
 
-# handle private
-async def handle_private(client, acc, message: Message, chatid: int, msgid: int):
+
+# handle private with batch updates
+async def handle_private(client, acc, message: Message, chatid: int, msgid: int, batch_msg=None, idx=None, total=None):
     try:
         msg: Message = await acc.get_messages(chatid, msgid)
         if msg is None or msg.empty:
@@ -339,9 +350,6 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
 
     chat = message.chat.id
 
-    if batch_temp.IS_BATCH.get(message.from_user.id):
-        return
-
     # 📩 Text Message
     if msg_type == "Text":
         try:
@@ -356,12 +364,12 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
 
     # 🟢 Check file size first
     file_size = getattr(msg.document or msg.video or msg.audio or msg.animation or msg.photo, "file_size", None)
-    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 4GB
+    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 2GB (update if needed)
 
     if file_size and file_size > MAX_SIZE:
         await client.send_message(
             chat,
-            f"❌ Cannot download/upload this file because its size is {humanbytes(file_size)}, which is over the 4GB limit.",
+            f"❌ Cannot download/upload this file because its size is {humanbytes(file_size)}, which is over the 2GB limit.",
             reply_to_message_id=message.id
         )
         return
@@ -370,20 +378,17 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
     user_download_dir = f"downloads/{message.from_user.id}"
     os.makedirs(user_download_dir, exist_ok=True)
 
-    # Use original filename if exists
     filename = getattr(msg.document or msg.video or msg.audio, "file_name", None)
     if msg_type == "Photo":
-        filename = f"{msg.id}.jpg"  # photo extension safe
-
+        filename = f"{msg.id}.jpg"
     if not filename:
         filename = f"{msg.id}_file"
 
     file_path = os.path.join(user_download_dir, filename)
 
     # Show downloading status
-    smsg = await client.send_message(chat, "**Downloading...**", reply_to_message_id=message.id)
+    smsg = await client.send_message(chat, f"⏳ Downloading Message ID: {msgid}", reply_to_message_id=message.id)
 
-    # Download the file
     try:
         file = await acc.download_media(
             msg,
@@ -408,49 +413,47 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
                 try:
                     thumb = await acc.download_media(msg.document.thumbs[0].file_id)
                 except: pass
-            await client.send_document(
-                chat, file, thumb=thumb, caption=caption,
-                reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML,
-                progress=progress, progress_args=[smsg, "upload"]
-            )
-
+            await client.send_document(chat, file, thumb=thumb, caption=caption, reply_to_message_id=message.id,
+                                       parse_mode=enums.ParseMode.HTML, progress=progress, progress_args=[smsg, "upload"])
         elif msg_type == "Video":
             if getattr(msg.video, "thumbs", None):
                 try:
                     thumb = await acc.download_media(msg.video.thumbs[0].file_id)
                 except: pass
-            await client.send_video(
-                chat, file, duration=msg.video.duration, width=msg.video.width,
-                height=msg.video.height, thumb=thumb, caption=caption,
-                reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML,
-                progress=progress, progress_args=[smsg, "upload"]
-            )
-
+            await client.send_video(chat, file, duration=msg.video.duration, width=msg.video.width,
+                                    height=msg.video.height, thumb=thumb, caption=caption,
+                                    reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML,
+                                    progress=progress, progress_args=[smsg, "upload"])
         elif msg_type == "Animation":
             await client.send_animation(chat, file, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
-
         elif msg_type == "Sticker":
             await client.send_sticker(chat, file, reply_to_message_id=message.id)
-
         elif msg_type == "Voice":
-            await client.send_voice(chat, file, caption=caption, caption_entities=msg.caption_entities, reply_to_message_id=message.id, progress=progress, progress_args=[smsg, "upload"])
-
+            await client.send_voice(chat, file, caption=caption, caption_entities=msg.caption_entities,
+                                    reply_to_message_id=message.id, progress=progress, progress_args=[smsg, "upload"])
         elif msg_type == "Audio":
             if getattr(msg.audio, "thumbs", None):
                 try:
                     thumb = await acc.download_media(msg.audio.thumbs[0].file_id)
                 except: pass
-            await client.send_audio(chat, file, thumb=thumb, caption=caption, reply_to_message_id=message.id, progress=progress, progress_args=[smsg, "upload"])
-
+            await client.send_audio(chat, file, thumb=thumb, caption=caption,
+                                    reply_to_message_id=message.id, progress=progress, progress_args=[smsg, "upload"])
         elif msg_type == "Photo":
             await client.send_photo(chat, file, caption=caption, reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML)
+
+        # Update batch message on successful upload
+        if batch_msg and idx and total:
+            bar_len = 20
+            progress_ratio = idx / total
+            filled = int(progress_ratio * bar_len)
+            bar = "▰" * filled + "▱" * (bar_len - filled)
+            await batch_msg.edit_text(f"✅ Uploaded Message ID: {msgid}\nProgress: {bar} {idx}/{total}")
 
     except Exception as e:
         if ERROR_MESSAGE:
             await client.send_message(chat, f"Error uploading: {e}", reply_to_message_id=message.id)
 
     finally:
-        # Cleanup
         if os.path.exists(file):
             os.remove(file)
         if thumb and os.path.exists(thumb):
@@ -458,6 +461,7 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
         try:
             await smsg.delete()
         except: pass
+
 
 
 # get the type of message
