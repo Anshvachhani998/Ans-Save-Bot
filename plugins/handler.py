@@ -14,9 +14,6 @@ class batch_temp(object):
     IS_BATCH = {}
 
 
-
-
-# start command
 @Client.on_message(filters.command(["start"]))
 async def send_start(client: Client, message: Message):
     if not await db.is_user_exist(message.from_user.id):
@@ -345,10 +342,12 @@ async def handle_private(client: Client, acc, message: Message, chatid: int, msg
     asyncio.create_task(downstatus(client, f'{message.id}downstatus.txt', smsg, chat))
     try:
         user_download_dir = f'downloads/{message.from_user.id}'
+        tmp_path = f"/dev/shm/{msg.id}_file" if os.path.exists("/dev/shm") else f"{user_download_dir}/{msg.id}_file"
+
         os.makedirs(user_download_dir, exist_ok=True)
         file = await acc.download_media(
            msg,
-           file_name=f'{user_download_dir}/sdsdsds.mkv',
+           file_name=tmp_path,
            progress=progress,
            progress_args=[smsg, "download"],
            in_memory=False
