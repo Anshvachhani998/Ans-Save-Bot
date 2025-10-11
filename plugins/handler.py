@@ -416,7 +416,7 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
                 chat, file, duration=msg.video.duration, width=msg.video.width,
                 height=msg.video.height, thumb=thumb, caption=caption,
                 reply_to_message_id=message.id, parse_mode=enums.ParseMode.HTML,
-                progress=progress, progress_args=[message, "up"]
+                progress=progress, progress_args=[message, "upload"]
             )
             if thumb and os.path.exists(thumb):
                 os.remove(thumb)
@@ -428,7 +428,7 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
             await client.send_sticker(chat, file, reply_to_message_id=message.id)
 
         elif msg_type == "Voice":
-            await client.send_voice(chat, file, caption=caption, caption_entities=msg.caption_entities, reply_to_message_id=message.id, progress=progress, progress_args=[message, "up"])
+            await client.send_voice(chat, file, caption=caption, caption_entities=msg.caption_entities, reply_to_message_id=message.id, progress=progress, progress_args=[message, "upload"])
 
         elif msg_type == "Audio":
             thumb = None
