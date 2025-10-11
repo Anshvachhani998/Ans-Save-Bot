@@ -354,6 +354,18 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
                 await client.send_message(chat, f"Error: {e}", reply_to_message_id=message.id)
         return
 
+    # 🟢 Check file size first
+    file_size = getattr(msg.document or msg.video or msg.audio or msg.animation, "file_size", None)
+    MAX_SIZE = 4 * 1024 * 1024 * 1024  # 4GB in bytes
+
+    if file_size and file_size > MAX_SIZE:
+        await client.send_message(
+            chat,
+            f"❌ Cannot download/upload this file because its size is {humanbytes(file_size)}, which is over the 4GB limit.",
+            reply_to_message_id=message.id
+        )
+        return
+
     # 🟢 Prepare download folder
     user_download_dir = f"downloads/{message.from_user.id}"
     os.makedirs(user_download_dir, exist_ok=True)
@@ -441,6 +453,7 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
         try:
             await smsg.delete()
         except: pass
+
 
 # get the type of message
 def get_message_type(msg: pyrogram.types.messages_and_media.message.Message):
