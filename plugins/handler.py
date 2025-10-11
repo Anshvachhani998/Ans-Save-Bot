@@ -436,7 +436,7 @@ async def handle_private(client, acc, message: Message, chatid: int, msgid: int)
                     thumb = await acc.download_media(msg.audio.thumbs[0].file_id)
                 except: pass
 
-            await client.send_audio(chat, file, thumb=thumb, caption=caption, reply_to_message_id=message.id, progress=progress, progress_args=[message, "up"])
+            await client.send_audio(chat, file, thumb=thumb, caption=caption, reply_to_message_id=message.id, progress=progress, progress_args=[smsg, "upload"])
             if thumb and os.path.exists(thumb):
                 os.remove(thumb)
 
