@@ -61,17 +61,18 @@ from pyrogram import Client, enums
 from pyrogram.types import Message
 
 
-async def progress(current, total, message: Message, stage: str):
+async def progress(current, total, status_message: Message, stage: str):
+    import time
+
     now = time.time()
-    if not hasattr(message, "start_time"):
-        message.start_time = now
-    diff = now - message.start_time
+    if not hasattr(status_message, "start_time"):
+        status_message.start_time = now
+    diff = now - status_message.start_time
     if diff == 0:
         diff = 1
 
     speed = current / diff
     percentage = current * 100 / total
-    elapsed = round(diff)
     eta = round((total - current) / speed) if speed > 0 else 0
 
     bar_length = 20
@@ -86,11 +87,11 @@ async def progress(current, total, message: Message, stage: str):
         f"**ETA:** {time_formatter(eta)}"
     )
 
-    # Update message every few seconds
-    if not hasattr(message, "last_edit") or (now - message.last_edit) > 5:
+    # Edit every 2-3 sec to avoid flood
+    if not hasattr(status_message, "last_edit") or (now - status_message.last_edit) > 3:
         try:
-            await message.edit_text(msg_text)
-            message.last_edit = now
+            await status_message.edit_text(msg_text)
+            status_message.last_edit = now
         except:
             pass
 
