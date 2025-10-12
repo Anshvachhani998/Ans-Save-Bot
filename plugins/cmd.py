@@ -59,7 +59,6 @@ async def git_pull(client, message):
 
 
 import logging
-from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from database.db import db  # tumhara DB class
 
