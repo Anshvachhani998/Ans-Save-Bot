@@ -10,7 +10,6 @@ class Database:
         self.db = self._client[database_name]
         self.col = self.db["newusers"]
 
-
     def new_user(self, id, name):
         return {
             "user_id": int(id),
@@ -21,15 +20,15 @@ class Database:
             "total_tasks": 0,
             "last_reset": datetime.utcnow().strftime("%Y-%m-%d")
         }
-        
+
     async def add_user(self, id, name):
         user = self.new_user(id, name)
         await self.col.insert_one(user)
-    
+
     async def is_user_exist(self, id):
-        user = await self.col.find_one({'id':int(id)})
+        user = await self.col.find_one({"user_id": int(id)})
         return bool(user)
-    
+        
     async def total_users_count(self):
         count = await self.col.count_documents({})
         return count
