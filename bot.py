@@ -10,7 +10,6 @@ from datetime import date, datetime
 from plugins import web_server
 from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, PORT
 
-# Try to import optional settings (STRING_SESSION, LOGIN_SYSTEM). Use safe defaults if missing.
 try:
     from info import STRING_SESSION, LOGIN_SYSTEM
 except Exception:
@@ -27,14 +26,17 @@ pyroutils.MIN_CHAT_ID = -999999999999
 pyroutils.MIN_CHANNEL_ID = -100999999999999
 
 # Logging
-logging.getLogger().setLevel(logging.INFO)
-logging.getLogger("pyrogram").setLevel(logging.ERROR)
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    level=logging.INFO
+)
 
 # Global user client reference
 TechVJUser: Client | None = None
 
 class Bot(Client):
     def __init__(self):
+        logging.info("🔹 Initializing Bot instance...")
         super().__init__(
             name=SESSION,
             api_id=API_ID,
@@ -45,18 +47,14 @@ class Bot(Client):
             sleep_threshold=10,
             max_concurrent_transmissions=6
         )
-        # Keep track whether user session was started here
         self._user_session_started = False
+        logging.info("✅ Bot instance initialized")
 
     async def _maybe_start_user_session(self):
-        """
-        Start TechVJUser if STRING_SESSION is provided and LOGIN_SYSTEM is False.
-        This runs before bot start so the user client is available during bot runtime.
-        """
         global TechVJUser
         if STRING_SESSION and LOGIN_SYSTEM == False:
+            logging.info("🔑 STRING_SESSION found, starting TechVJUser...")
             try:
-                logging.info("🔑 STRING_SESSION found — starting TechVJUser session...")
                 TechVJUser = Client(
                     "TechVJUser",
                     api_id=API_ID,
@@ -71,18 +69,15 @@ class Bot(Client):
                 logging.error(f"❌ Failed to start TechVJUser: {e}")
                 TechVJUser = None
         else:
-            logging.info("ℹ️ No STRING_SESSION provided or LOGIN_SYSTEM enabled — skipping user session startup.")
+            logging.info("ℹ️ No STRING_SESSION or LOGIN_SYSTEM enabled, skipping user session startup")
 
     async def _maybe_stop_user_session(self):
-        """
-        Stop the TechVJUser if it was started by this process.
-        """
         global TechVJUser
         if TechVJUser and self._user_session_started:
+            logging.info("🛑 Stopping TechVJUser session...")
             try:
-                logging.info("🛑 Stopping TechVJUser session...")
                 await TechVJUser.stop()
-                logging.info("✅ TechVJUser stopped.")
+                logging.info("✅ TechVJUser stopped")
             except Exception as e:
                 logging.error(f"❌ Error stopping TechVJUser: {e}")
             finally:
@@ -90,43 +85,45 @@ class Bot(Client):
                 self._user_session_started = False
 
     async def start(self):
-        # Start user session first (if applicable)
+        logging.info("🚀 Starting Bot...")
         await self._maybe_start_user_session()
 
-        # Then start the bot client
+        logging.info("🔹 Starting Bot client...")
         await super().start()
         me = await self.get_me()
-        logging.info(f"🤖 {me.first_name} (@{me.username}) running on Pyrogram v{__version__} (Layer {layer})")
+        logging.info(f"🤖 Bot running: {me.first_name} (@{me.username}) | Pyrogram v{__version__} Layer {layer}")
 
-        # Send restart log to configured channel (if available)
         try:
             tz = pytz.timezone('Asia/Kolkata')
             today = date.today()
             now = datetime.now(tz)
             time = now.strftime("%H:%M:%S %p")
-            await self.send_message(chat_id=LOG_CHANNEL, text=f"✅ Bot Restarted! 📅 Date: {today} 🕒 Time: {time}")
+            await self.send_message(LOG_CHANNEL, f"✅ Bot Restarted! 📅 {today} 🕒 {time}")
+            logging.info("✅ Restart log sent to LOG_CHANNEL")
         except Exception as e:
-            logging.error(f"Could not send restart message to LOG_CHANNEL: {e}")
+            logging.error(f"❌ Could not send restart message to LOG_CHANNEL: {e}")
 
-        # Start web server (plugin-provided)
         try:
+            logging.info("🌐 Starting web server...")
             app = web.AppRunner(await web_server())
             await app.setup()
             await web.TCPSite(app, "0.0.0.0", PORT).start()
-            logging.info(f"🌐 Web Server Running on PORT {PORT}")
+            logging.info(f"🌐 Web server running on PORT {PORT}")
         except Exception as e:
-            logging.error(f"Failed to start web server: {e}")
+            logging.error(f"❌ Failed to start web server: {e}")
 
     async def stop(self, *args):
-        # Stop user session first (if started)
+        logging.info("🛑 Stopping Bot...")
         await self._maybe_stop_user_session()
-
-        # Then stop the bot
         await super().stop()
-        logging.info("🛑 Bot Stopped.")
+        logging.info("🛑 Bot Stopped")
 
 # Entry point
 if __name__ == "__main__":
-    logging.info("🚀 Starting Bot (with optional TechVJUser session)...")
-    app = Bot()
-    app.run()
+    logging.info("💡 Main execution started")
+    try:
+        app = Bot()
+        app.run()
+    except Exception as e:
+        logging.error(f"❌ Bot crashed: {e}")
+        logging.error("Traceback:\n" + "".join(logging.TracebackException.from_exception(e).format()))
