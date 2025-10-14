@@ -51,14 +51,7 @@ async def send_cancel(client: Client, message: Message):
         text="**Batch Successfully Cancelled.**"
     )
 
-from pyrogram import Client, filters
-from pyrogram.types import Message
-from pyrogram.errors import UserAlreadyParticipant, InviteHashExpired, UsernameNotOccupied
-import asyncio
 
-import asyncio, os, math, time
-from pyrogram import Client, enums
-from pyrogram.types import Message
 
 
 async def progress(current, total, status_message: Message, stage: str):
