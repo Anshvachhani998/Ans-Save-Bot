@@ -18,6 +18,33 @@ from database.db import db
 import json
 import asyncio
 
+@Client.on_message(filters.command("remove_duplicates"))
+async def remove_duplicates_cmd(client, message):
+    status_msg = await message.reply("🔍 Checking for duplicate users...")
+
+    # Fetch all users with only user_id and _id
+    cursor = db.col.find({}, {"user_id": 1})
+    user_ids = {}
+    duplicates_count = 0
+
+    async for doc in cursor:
+        uid = doc["user_id"]
+        _id = doc["_id"]
+
+        if uid in user_ids:
+            # Already seen, delete this duplicate
+            await db.col.delete_one({"_id": _id})
+            duplicates_count += 1
+        else:
+            user_ids[uid] = _id
+
+        # Optional: update progress every 50
+        if duplicates_count % 50 == 0 and duplicates_count != 0:
+            await status_msg.edit(f"🔍 Removing duplicates...\nDeleted so far: {duplicates_count}")
+
+    await status_msg.edit(f"✅ Duplicate removal complete!\nTotal duplicates removed: {duplicates_count}")
+
+
 @Client.on_message(filters.command("importusers"))
 async def import_users_cmd(client, message):
     if not message.reply_to_message or not message.reply_to_message.document:
