@@ -15,6 +15,40 @@ import json, os
 from datetime import datetime
 from database.db import db 
 
+@Client.on_message(filters.command("importusers"))
+async def import_users_cmd(client, message):
+    import json
+
+    if not message.reply_to_message or not message.reply_to_message.document:
+        return await message.reply("Reply to a JSON file containing user data.")
+
+    file = await message.reply_to_message.download()
+    with open(file, "r", encoding="utf-8") as f:
+        users = json.load(f)
+
+    added = 0
+    skipped = 0
+
+    for user in users:
+        try:
+            user_id = int(user["id"])
+            name = user["name"]
+
+            if await db.is_user_exist(user_id):
+                skipped += 1
+                continue
+
+            await db.add_user(user_id, name)
+            added += 1
+
+        except Exception as e:
+            print(f"Error adding user {user}: {e}")
+
+    await message.reply_text(
+        f"✅ Import complete!\n\n**Added:** {added}\n**Skipped (already exists):** {skipped}"
+    )
+
+
 @Client.on_message(filters.command("userstats"))
 async def user_stats(client, message):
     await message.reply("🔍 Gathering user statistics, please wait...")
