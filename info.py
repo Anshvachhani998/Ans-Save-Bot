@@ -1,8 +1,7 @@
 
 
 import os
-
-LOGIN_SYSTEM = bool(os.environ.get('LOGIN_SYSTEM', True)) # True or False
+LOGIN_SYSTEM = os.environ.get('LOGIN_SYSTEM', 'True').lower() == 'true'
 
 STRING_SESSION = ""
 
