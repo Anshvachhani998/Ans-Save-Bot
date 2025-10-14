@@ -39,7 +39,7 @@ async def remove_duplicates_cmd(client, message):
             user_ids[uid] = _id
 
         # Optional: update progress every 50
-        if duplicates_count % 50 == 0 and duplicates_count != 0:
+        if duplicates_count % 500 == 0 and duplicates_count != 0:
             await status_msg.edit(f"🔍 Removing duplicates...\nDeleted so far: {duplicates_count}")
 
     await status_msg.edit(f"✅ Duplicate removal complete!\nTotal duplicates removed: {duplicates_count}")
