@@ -15,47 +15,29 @@ import json, os
 from datetime import datetime
 from database.db import db 
 
-@Client.on_message(filters.command("import") & filters.reply)
-async def import_users_cmd(client, message):
-    reply = message.reply_to_message
+@Client.on_message(filters.command("userstats"))
+async def user_stats(client, message):
+    await message.reply("🔍 Gathering user statistics, please wait...")
 
-    # Check if JSON file reply me diya gaya hai
-    if not reply.document or not reply.document.file_name.endswith(".json"):
-        return await message.reply("⚠️ Reply me ek valid `.json` file bhej bhai!")
+    total_docs = await db.col.count_documents({})
+    
+    # Fetch all user_ids to count duplicates
+    cursor = db.col.find({}, {"user_id": 1})
+    user_ids = []
+    async for doc in cursor:
+        user_ids.append(doc["user_id"])
 
-    try:
-        # File download karo
-        file_path = await reply.download()
-        with open(file_path, "r") as f:
-            data = json.load(f)
+    unique_ids = set(user_ids)
+    duplicates = len(user_ids) - len(unique_ids)
 
-        added = 0
-        skipped = 0
+    reply_text = (
+        f"📊 **User Statistics**\n\n"
+        f"✅ Total Users in DB: {total_docs}\n"
+        f"🔹 Unique Users: {len(unique_ids)}\n"
+        f"⚠️ Duplicate Users: {duplicates}"
+    )
 
-        for user in data:
-            try:
-                user_id = int(user["id"])
-                name = user.get("name", "Unknown")
-
-                # Check if user already exist
-                if await db.is_user_exist(user_id):
-                    skipped += 1
-                    continue
-
-                # Add new user
-                await db.add_user(user_id, name)
-                added += 1
-            except Exception as e:
-                print(f"Error adding user {user}: {e}")
-                continue
-
-        await message.reply(
-            f"✅ **Import Completed Successfully!**\n\n👥 **Added:** {added}\n⏭️ **Skipped:** {skipped}"
-        )
-
-    except Exception as e:
-        await message.reply(f"❌ Error reading JSON file:\n`{e}`")
-
+    await message.reply(reply_text)
 @Client.on_message(filters.command("restart"))
 async def git_pull(client, message):
     if message.from_user.id not in ADMINS:
