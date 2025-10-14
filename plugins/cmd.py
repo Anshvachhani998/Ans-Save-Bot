@@ -15,10 +15,11 @@ import json, os
 from datetime import datetime
 from database.db import db 
 
+import json
+import asyncio
+
 @Client.on_message(filters.command("importusers"))
 async def import_users_cmd(client, message):
-    import json
-
     if not message.reply_to_message or not message.reply_to_message.document:
         return await message.reply("Reply to a JSON file containing user data.")
 
@@ -26,28 +27,43 @@ async def import_users_cmd(client, message):
     with open(file, "r", encoding="utf-8") as f:
         users = json.load(f)
 
+    total_users = len(users)
     added = 0
     skipped = 0
 
-    for user in users:
+    status_msg = await message.reply(f"🔄 Importing users...\n0/{total_users} processed")
+
+    for index, user in enumerate(users, start=1):
         try:
             user_id = int(user["id"])
             name = user["name"]
 
             if await db.is_user_exist(user_id):
                 skipped += 1
-                continue
-
-            await db.add_user(user_id, name)
-            added += 1
+            else:
+                await db.add_user(user_id, name)
+                added += 1
 
         except Exception as e:
             print(f"Error adding user {user}: {e}")
 
-    await message.reply_text(
-        f"✅ Import complete!\n\n**Added:** {added}\n**Skipped (already exists):** {skipped}"
-    )
+        # Update progress every 10 users or last one
+        if index % 10 == 0 or index == total_users:
+            progress_text = (
+                f"🔄 Importing users...\n"
+                f"✅ Added: {added}\n"
+                f"⚠️ Skipped: {skipped}\n"
+                f"📊 Processed: {index}/{total_users}"
+            )
+            await status_msg.edit(progress_text)
+            await asyncio.sleep(0.1)  # Small delay to avoid flood
 
+    await status_msg.edit(
+        f"🎉 Import complete!\n\n"
+        f"✅ Total Added: {added}\n"
+        f"⚠️ Total Skipped: {skipped}\n"
+        f"📦 Total Users in File: {total_users}"
+    )
 
 @Client.on_message(filters.command("userstats"))
 async def user_stats(client, message):
