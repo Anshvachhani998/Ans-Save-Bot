@@ -16,6 +16,11 @@ from database.db import db
 
 SESSION_STRING_SIZE = 351
 
+@Client.on_message(filters.command("test"))
+async def test_cmd(client, message):
+    await message.reply("✅ Bot commands working fine!")
+
+
 @Client.on_message(filters.command("logout"))
 async def logout(client, message):
     user_data = await db.get_session(message.from_user.id)  
