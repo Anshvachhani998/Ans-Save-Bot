@@ -13,7 +13,7 @@ from info import LOG_CHANNEL, ADMINS, BOT_TOKEN
 from pyrogram.types import Message
 import json, os
 from datetime import datetime
-from database import db
+from database.db import db 
 
 @Client.on_message(filters.command("import") & filters.reply)
 async def import_users_cmd(client, message):
