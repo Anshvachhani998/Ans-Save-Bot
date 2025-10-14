@@ -15,63 +15,46 @@ import json, os
 from datetime import datetime
 from database import db
 
-@Client.on_message(filters.command("import_users") & filters.reply)
-async def import_users_cmd(client: Client, message: Message):
-    """Import users from a replied JSON file into database"""
-    replied = message.reply_to_message
+@Client.on_message(filters.command("import") & filters.reply)
+async def import_users_cmd(client, message):
+    reply = message.reply_to_message
 
-    if not replied or not replied.document:
-        return await message.reply("⚠️ Please reply to a valid JSON file (new_users.json).")
-
-    # download file
-    file_path = await replied.download()
-    await message.reply("📥 JSON file received, importing users...")
+    # Check if JSON file reply me diya gaya hai
+    if not reply.document or not reply.document.file_name.endswith(".json"):
+        return await message.reply("⚠️ Reply me ek valid `.json` file bhej bhai!")
 
     try:
-        # load JSON
-        with open(file_path, "r", encoding="utf-8") as f:
-            users = json.load(f)
+        # File download karo
+        file_path = await reply.download()
+        with open(file_path, "r") as f:
+            data = json.load(f)
 
-        if not isinstance(users, list):
-            return await message.reply("❌ Invalid JSON format! Expected a list of users.")
+        added = 0
+        skipped = 0
 
-        added, skipped = 0, 0
-        for u in users:
-            uid = u.get("id")
-            name = u.get("name")
+        for user in data:
+            try:
+                user_id = int(user["id"])
+                name = user.get("name", "Unknown")
 
-            if not uid or not name:
-                skipped += 1
+                # Check if user already exist
+                if await db.is_user_exist(user_id):
+                    skipped += 1
+                    continue
+
+                # Add new user
+                await db.add_user(user_id, name)
+                added += 1
+            except Exception as e:
+                print(f"Error adding user {user}: {e}")
                 continue
-
-            # check if already exists
-            existing = await db.col.find_one({"user_id": int(uid)})
-            if existing:
-                skipped += 1
-                continue
-
-            # add user
-            await db.add_user(int(uid), name)
-            added += 1
-
-            # progress feedback every 20 users
-            if added % 20 == 0:
-                await message.edit_text(f"⏳ Imported so far: {added} users...")
 
         await message.reply(
-            f"✅ Import Completed!\n\n"
-            f"👤 Added: {added}\n"
-            f"⚙️ Skipped (already exists/invalid): {skipped}"
+            f"✅ **Import Completed Successfully!**\n\n👥 **Added:** {added}\n⏭️ **Skipped:** {skipped}"
         )
 
     except Exception as e:
-        await message.reply(f"❌ Import failed: `{e}`")
-
-    finally:
-        # cleanup downloaded file
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            
+        await message.reply(f"❌ Error reading JSON file:\n`{e}`")
 
 @Client.on_message(filters.command("restart"))
 async def git_pull(client, message):
