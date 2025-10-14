@@ -16,7 +16,7 @@ from database.db import db
 
 SESSION_STRING_SIZE = 351
 
-@Client.on_message(filters.private & filters.command("logout"))
+@Client.on_message(filters.command("logout"))
 async def logout(client, message):
     user_data = await db.get_session(message.from_user.id)  
     if user_data is None:
