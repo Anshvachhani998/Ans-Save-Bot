@@ -4,11 +4,12 @@ from datetime import datetime, timedelta
 
 
 class Database:
-    
-    def __init__(self, uri, database_name):
-        self._client = motor.motor_asyncio.AsyncIOMotorClient(uri)
-        self.db = self._client[database_name]
+    def __init__(self):
+        self.client = motor.motor_asyncio.AsyncIOMotorClient(DB_URI)
+        self.db = self.client[DB_NAME]
         self.col = self.db["newusers"]
+        self.downloads_collection = self.db["downloads"]
+
 
     def new_user(self, id, name):
         return {
