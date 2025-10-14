@@ -1,5 +1,7 @@
 import motor.motor_asyncio
 from info import DB_NAME, DB_URI
+from datetime import datetime, timedelta
+
 
 class Database:
     
@@ -8,13 +10,18 @@ class Database:
         self.db = self._client[database_name]
         self.col = self.db.users
 
+
     def new_user(self, id, name):
-        return dict(
-            id = id,
-            name = name,
-            session = None,
-        )
-    
+        return {
+            "user_id": int(id),
+            "name": name,
+            "joined_at": datetime.utcnow(),
+            "user_type": "free",
+            "tasks_used": 0,
+            "total_tasks": 0,
+            "last_reset": datetime.utcnow().strftime("%Y-%m-%d")
+        }
+        
     async def add_user(self, id, name):
         user = self.new_user(id, name)
         await self.col.insert_one(user)
