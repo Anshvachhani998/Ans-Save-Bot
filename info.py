@@ -13,8 +13,8 @@ if LOGIN_SYSTEM == False:
 
 ERROR_MESSAGE = bool(os.environ.get('ERROR_MESSAGE', True))
 
-DB_URI = os.environ.get("DB_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority") # Warning - Give Db uri in deploy server environment variable, don't give in repo.
-DB_NAME = os.environ.get("DB_NAME", "vjsavecontentbot")
+DB_URI = os.environ.get("DB_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
+DB_NAME = os.environ.get("DB_NAME", "YouTubeDL")
 
 
 SESSION = "savebot"
