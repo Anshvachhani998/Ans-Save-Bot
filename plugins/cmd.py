@@ -183,7 +183,7 @@ def ask_ollama(user_text):
 def handle_text(_, msg):
     user_text = msg.text  # yaha filter se user ka text milta hai
     reply_text = ask_ollama(user_text)  # pass to API
-    msg.reply_text(reply_text or "Awww... kya hua baby 💕")
+    await msg.reply_text(reply_text or "Awww... kya hua baby 💕")
 
 
 
