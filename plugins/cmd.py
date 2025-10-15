@@ -181,7 +181,7 @@ def ask_ollama(user_text):
     return reply_text.strip()
 
 # Filter for all text messages (private chat only)
-@app.on_message(filters.private & filters.text)
+@Client.on_message(filters.private & filters.text)
 def handle_text(_, msg):
     user_text = msg.text  # yaha filter se user ka text milta hai
     reply_text = ask_ollama(user_text)  # pass to API
