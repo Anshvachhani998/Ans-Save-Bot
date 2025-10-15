@@ -160,8 +160,7 @@ async def git_pull(client, message):
 
 import requests, json
 
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = "http://localhost:40207/api/generate"
 
 PROMPT = """You are Anshi 💖 — a caring girlfriend.
 User: {text}
