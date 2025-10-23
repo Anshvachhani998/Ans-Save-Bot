@@ -70,7 +70,7 @@ instance = Instance.from_db(db)
 
 @instance.register
 class Media(Document):
-    file_id = fields.StrField(attribute='_id')
+    file_id = fields.StrField(mongo_name='_id')
     file_ref = fields.StrField(allow_none=True)
     file_name = fields.StrField(required=True)
     file_size = fields.IntField(required=True)
@@ -81,9 +81,8 @@ class Media(Document):
     msg_id = fields.StrField(allow_none=True)
 
     class Meta:
-        indexes = ('$file_name', )
+        indexes = ('$file_name',)
         collection_name = COLLECTION_NAME
-
 
 
 async def save_file(bot, media):
