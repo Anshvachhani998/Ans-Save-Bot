@@ -98,7 +98,7 @@ class Bot(Client):
             today = date.today()
             now = datetime.now(tz)
             time = now.strftime("%H:%M:%S %p")
-            await self.send_message(LOG_CHANNEL, f"✅ Bot Restarted! 📅 {today} 🕒 {time}")
+            await self.send_message(7298944577, f"✅ Bot Restarted! 📅 {today} 🕒 {time}")
             logging.info("✅ Restart log sent to LOG_CHANNEL")
         except Exception as e:
             logging.error(f"❌ Could not send restart message to LOG_CHANNEL: {e}")
