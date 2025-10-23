@@ -13,11 +13,49 @@ from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
 from info import DATABASE_URI, DATABASE_NAME, LOG_CHANNEL, COLLECTION_NAME, , BOT_TOKEN, API_ID, API_HASH
-from utils import replace_username, temp, get_poster
 from database.toptrending import top
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
+
+
+SPELL_WORDS = ["Dilpreet Dhillon Feat. Gurlej Akhtar", "(", ")", "457", "Review", "spoilers", "Special", "BFH", "Bonus 5", "Part", "part", "Movies and Specials to Stream", "Season", "season", "HD", "hd", "Horror Movie", "IT and the Upside Down of Nostalgia", "?", "None", ":", "'", ",", "episode", "Episode", "Movie Review", "Ms. Marvel Trailer, X Horror Movie Review - Episode 93"]
+
+#username remove
+
+BLACKLIST_WORDS = (
+    list(os.environ.get("BLACKLIST_WORDS").split(","))
+    if os.environ.get("BLACKLIST_WORDS")
+    else []
+)
+
+BLACKLIST_WORDS = ["[Telegram@alpacinodump], {_@NRDramaa_}, www.1TamilMV.dad, @SH_OTT, @New_Movies_1stOnTG", "www_TamilBlasters_bond", "[Telegram@alpacinodump]", "tg @Bollyarchives ", "@Netflix_Villa_Original", "@Netflix Villa Original", "{_@NRDramaa_}", "www_SkymoviesHD", "@FBM_HW", "[CF]", "[ᎡᴛᏴᴛ]", "@CK_HEVC", "@Tamil LinkzZ", "@SY MS", "SkymoviesHD", "www 1TamilMV zip", "a8ix live", "@Cinematic_world", "SkymoviesHD", "@MoViEsWeB HeVc", "Filmy4Cab com", "www 7MovieRulz mn", "www 1TamilMV vin", "www 1TamilMV win", "www 1TamilMV cafe", "@ADrama  Lovers", "www 1TamilMV help", "KC", "@CK Moviez", "E4E", "[BindasMovies]", "[Hezz Series]", "[Hezz Movies]", "[CC]", "www Tamilblasters rent", "[CH]", "www 4MovieRulz com", "www.TamiLRockers.com.avi", "www_1TamilMV_fun", "www_DVDWap_com", "www.TamilRockers.fi", "www TamilBlasters cam", "www Tamilblasters social", "[@The 4x Team]", "@mj link 4u", "[CD]", "@Andhra movies", "@BT MOVIES HD", "@Team_HDT", "Telegram@APDBackup", "Telegram@Alpacinodump", "www 1TamilMV fans", "@Ruraljat Studio", "7HitMovies bio", "[MZM]", "[@UCMOVIE]", "@CC_New", "[MF]", "@Mallu_Movies", "[MC]", "[@MociesVerse]", "@Mm_Linkz", "@BT_MOVIES_HD_@FILMSCLUB04", "www TamilVaathi online", "www 1TamilMV mx", "@BGM LinkzZ", "www 1TamilMV media", "[D&O]", "[MM]", "[", "]", "[FC]", "[CF]", "LinkZz", "[DFBC]", "@New_Movie", "@Infinite_Movies2", "MM", "@R A R B G", "[F&T]", "[KMH]", "[DnO]", "[F&T]", "MLM", "@TM_LMO", "@x265_E4E", "@HEVC MoviesZ", "SSDMovies", "@MM Linkz", "[CC]", "@Mallu_Movies", "@DK Drama", "@luxmv_Linkz", "@Akw_links", "CK HEVC", "@Team_HDT", "[CP]", "www 1TamilMV men", "www TamilRockers", "@MM", "@mm", "[MW]", "@TN68 Linkzz", "@Clipmate_Movie", "[MASHOBUC]", "Official TheMoviesBoss", "www CineVez one", "www 7MovieRulz lv", "www 1TamilMV vip", "[SMM Official]", "[Movie Bazar]", "@BM_Links", "[CG]", "Filmy4wap xyz", "www 1TamilMV pw", "www TamilBlasters pm", "[FH]", "Torrent911 tv", "[MZM]", "www CineVez top", "www CineVez top", "www 7MovieRulz sx", "[YDF]", "www 1TamilMV art", "www TamilBlasters me", "[mwkOTT]", "@Tamil_LinkzZ", "[LV]", "@The_4x_Team", "TheMoviesBoss"]
+
+async def spell_words(string):
+    prohibitedWords = SPELL_WORDS
+    big_regex = re.compile(r'(\s?(' + '|'.join(map(re.escape, prohibitedWords)) + r')\b\s?)|(\s?\b(' + '|'.join(map(re.escape, prohibitedWords)) + r')\s?)')
+    formatted = big_regex.sub(lambda match: match.group().replace(match.group(2) or match.group(4), ""), string)
+    return formatted.replace("-"," ")	
+
+	        
+def replace_username(text):
+    prohibited_words = BLACKLIST_WORDS
+    big_regex = re.compile('|'.join(map(re.escape, prohibited_words)))
+    text = big_regex.sub("", text)
+
+    # Remove usernames
+    usernames = re.findall("([@][A-Za-z0-9_]+)", text)
+    for username in usernames:
+        text = text.replace(username, "")
+
+    # Remove emojis
+    text = ''.join(char for char in text if unicodedata.category(char) != 'So')
+
+    # Remove multiple spaces with a single space
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    return text
+
 
 
 
