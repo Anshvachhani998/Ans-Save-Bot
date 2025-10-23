@@ -2,7 +2,7 @@ import pymongo
 from info import DATABASE_NAME, DATABASE_URI
 from datetime import datetime, timedelta
 import pytz
-from info import DATABASE_URI, DATABASE_NAME
+from info import DB_URI, DB_NAME
 import motor.motor_asyncio
 from pymongo.errors import DuplicateKeyError
 
@@ -16,8 +16,8 @@ logger.setLevel(logging.ERROR)
 
 class Toptrending:
     def __init__(self):
-        client = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URI)
-        db = client[DATABASE_NAME]
+        client = motor.motor_asyncio.AsyncIOMotorClient(DB_URI)
+        db = client[DB_NAME]
         self.forwarded_files = db["forwarded_files"]
         self.search_files = db["search_files"]
         self.totalverified = db["total_verified"]
