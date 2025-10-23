@@ -1,6 +1,6 @@
 import logging
 from struct import pack
-import re
+import re, os
 import asyncio
 import base64
 import pymongo
