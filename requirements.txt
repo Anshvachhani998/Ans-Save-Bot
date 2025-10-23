@@ -18,3 +18,4 @@ matplotlib
 asyncpg
 werkzeug==2.0.2
 itsdangerous==2.0.1
+umongo==3.0.1
