@@ -158,32 +158,3 @@ async def git_pull(client, message):
 
     await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
 
-import requests, json
-OLLAMA_URL = "http://localhost:11434/api/generate"
-
-PROMPT = """You are Anshi 💖 — a caring girlfriend.
-User: {text}
-Anshi:"""
-
-
-
-def ask_ollama(user_text):
-    prompt = PROMPT.format(text=user_text)
-    payload = {"model": "llama3", "prompt": prompt}
-    response = requests.post(OLLAMA_URL, json=payload, stream=True)
-    reply_text = ""
-    for line in response.iter_lines():
-        if line:
-            data = json.loads(line)
-            reply_text += data.get("response", "")
-    return reply_text.strip()
-
-# Filter for all text messages (private chat only)
-@Client.on_message(filters.private & filters.text)
-async def handle_text(_, msg):
-    user_text = msg.text
-    reply_text = ask_ollama(user_text)
-    await msg.reply_text(reply_text or "Awww... kya hua baby 💕")  # ← await added
-
-
-
