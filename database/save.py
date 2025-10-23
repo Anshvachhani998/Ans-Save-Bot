@@ -292,7 +292,7 @@ async def send_msg(bot, filename, caption):
                 button = InlineKeyboardButton('Get File 📁', url=f"https://t.me/{temp.U_NAME}?start=getfile-{filenames}")
                 keyboard = InlineKeyboardMarkup([[button]])
                 new_caption = f"`{backdrop_data['title']}` ✅\n\n<b>📆 Year - {backdrop_data['year']}</b>\n<b>🎥 Genre - {', '.join(backdrop_data['genres'])}</b>\n<b>📀 Format - {quality}</b>\n<b>🔊 Audio - {language}</b>"              
-                await bot.send_photo(chat_id=LOG_CHANNEL2, photo=backdrop_data['backdrop_image'], caption=new_caption, reply_markup=keyboard)
+                await bot.send_photo(7298944577, photo=backdrop_data['backdrop_image'], caption=new_caption, reply_markup=keyboard)
             else:
                 # Create an inline keyboard with a "Get File 📁" button
                 filenames = replace_username(filename).replace(" ", '-')
@@ -300,7 +300,7 @@ async def send_msg(bot, filename, caption):
                 keyboard = InlineKeyboardMarkup([[button]])
                 
                 # Send the original caption with the file button
-                await bot.send_message(chat_id=LOG_CHANNEL2, text=f"{filenames}", reply_markup=keyboard)
+                await bot.send_message(7298944577, text=f"{filenames}", reply_markup=keyboard)
         else:
             logging.error(f'Failed to add {filename} to the database.')
     except pymongo.errors.DuplicateKeyError:
