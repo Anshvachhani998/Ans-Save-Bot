@@ -1,5 +1,5 @@
 import pymongo
-from info import DATABASE_NAME, DATABASE_URI
+
 from datetime import datetime, timedelta
 import pytz
 from info import DB_URI, DB_NAME
