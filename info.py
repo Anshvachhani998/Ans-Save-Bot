@@ -19,19 +19,19 @@ DB_NAME = os.environ.get("DB_NAME", "YouTubeDL")
 SESSION = "savebot"
 API_ID = int(os.getenv("API_ID", "29256205"))
 API_HASH = os.getenv("API_HASH", "0c4124e19f592dc4290c035f4814b9b9")
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8272470118:AAFMX8b4m594Zra8tpT1_lwf9e-Sp2EeWPc")
-LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1003003594014"))
+BOT_TOKEN = os.getenv("BOT_TOKEN", "7985040786:AAH11LYIfSN8KIpWHYNC-88T63_8w4PBCG4")
+LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1003108208332"))
 DUMP_CHANNEL_ID = int(os.getenv("DUMP_CHANNEL_ID", "-1002890289206"))
 JIO_DUMP = int(os.getenv("JIO_DUMP", "-1003022720180"))
 PORT = int(os.getenv("PORT", "8080"))
 FORCE_CHANNEL = int(os.getenv("FORCE_CHANNEL", "-1002849184248"))
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
-MONGO_NAME = os.getenv("MONGO_NAME", "SpotifyDL")
+MONGO_NAME = os.getenv("MONGO_NAME", "jsut")
 
 MONGO_URI_2 = os.getenv("MONGO_URI_2", "mongodb+srv://ftmbotzx:ftmbotzx@cluster0.0b8imks.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-MONGO_NAME_2 = os.getenv("MONGO_NAME_2", "SpotifyDL")
+MONGO_NAME_2 = os.getenv("MONGO_NAME_2", "just")
 
-COLLECTION_NAME = os.getenv("COLLECTION_NAME", "medias")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "just")
 ADMINS = [5660839376, 6167872503, 5961011848, 6538627123, 8104777494]
 OWNER_ID = 7744665378
 DAILY_LIMITS = 20
