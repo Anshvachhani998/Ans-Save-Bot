@@ -11,7 +11,7 @@ from pymongo.errors import DuplicateKeyError
 from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
-from info import DATABASE_URI, DATABASE_NAME, LOG_CHANNEL, COLLECTION_NAME, BOT_TOKEN, API_ID, API_HASH
+from info import DB_URI, DB_NAME, LOG_CHANNEL, COLLECTION_NAME, BOT_TOKEN, API_ID, API_HASH
 from database.toptrending import top
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -64,8 +64,8 @@ logger.setLevel(logging.INFO)
 app = Client("my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 
-client = AsyncIOMotorClient(DATABASE_URI)
-db = client[DATABASE_NAME]
+client = AsyncIOMotorClient(DB_URI)
+db = client[DB_NAME]
 instance = Instance.from_db(db)
 
 @instance.register
