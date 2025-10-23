@@ -23,7 +23,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "7985040786:AAH11LYIfSN8KIpWHYNC-88T63_8w4PBC
 LOG_CHANNEL = int(os.getenv("LOG_CHANNEL", "-1003108208332"))
 DUMP_CHANNEL_ID = int(os.getenv("DUMP_CHANNEL_ID", "-1002890289206"))
 JIO_DUMP = int(os.getenv("JIO_DUMP", "-1003022720180"))
-PORT = int(os.getenv("PORT", "8080"))
+PORT = int(os.getenv("PORT", "8084"))
 FORCE_CHANNEL = int(os.getenv("FORCE_CHANNEL", "-1002849184248"))
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://Ansh089:Ansh089@cluster0.y8tpouc.mongodb.net/?retryWrites=true&w=majority")
 MONGO_NAME = os.getenv("MONGO_NAME", "jsut")
