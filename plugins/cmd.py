@@ -175,12 +175,15 @@ async def add_file(client, message):
     else:
         await message.reply_text(f"⚠️ File `{file_name}` already exists in your database.")
 
+from pyrogram.enums import ParseMode
+
 
 @Client.on_message(filters.command("today") & filters.private)
 async def show_todays_files(client, message):
     user_id = message.from_user.id
+    db_instance = FileDB(mydb)
 
-    movies, series = await db.get_todays_files(user_id)
+    movies, series = await db_instance.get_todays_files(user_id)
     if not movies and not series:
         await message.reply_text("❌ No files added today.")
         return
@@ -188,13 +191,17 @@ async def show_todays_files(client, message):
     text = f"📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
     if movies:
-        text += "🍿 Movies\n"
+        text += "🍿 Movies\n<blockquote>\n"
         for i, m in enumerate(movies, 1):
             text += f"({i}) {m}\n"
+        text += "</blockquote>\n"
+
     if series:
-        text += "\n📺 Series\n"
+        text += "\n📺 Series\n<blockquote>\n"
         for i, s in enumerate(series, 1):
             text += f"({i}) {s}\n"
+        text += "</blockquote>\n"
 
     text += "\nPowered by - Movie House 🏠 (https://t.me/m_h_updates)"
-    await message.reply_text(text)
+
+    await message.reply_text(text, parse_mode=ParseMode.HTML)
