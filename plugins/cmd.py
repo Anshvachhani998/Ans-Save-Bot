@@ -191,17 +191,16 @@ async def show_todays_files(client, message):
     text = f"📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
     if movies:
-        text += "🍿 Movies\n<blockquote>\n"
+        text += "🍿 Movies\n"
         for i, m in enumerate(movies, 1):
             text += f"({i}) {m}\n"
-        text += "</blockquote>\n"
 
     if series:
-        text += "\n📺 Series\n<blockquote>\n"
+        text += "\n📺 Series\n"
         for i, s in enumerate(series, 1):
             text += f"({i}) {s}\n"
-        text += "</blockquote>\n"
 
-    text += "\nPowered by - Movie House 🏠 (https://t.me/m_h_updates)"
+    # Add only the last line in blockquote
+    text += f"\n<blockquote>Powered by - Movie House 🏠 (https://t.me/m_h_updates)</blockquote>"
 
     await message.reply_text(text, parse_mode=ParseMode.HTML)
