@@ -62,7 +62,7 @@ async def nightly_update(client):
         previous_day = datetime.now().date() - timedelta(days=1)
         logging.info(f"🔹 Fetching files for user_id: {user_id} and date: {previous_day}")
 
-        combined_movies, combined_series = await db.get_files_for_date(user_id, previous_day)
+        combined_movies, combined_series = await db.get_todays_files(user_id, previous_day)
         logging.info(f"📂 Found {len(combined_movies)} movies and {len(combined_series)} series")
 
         if not combined_movies and not combined_series:
