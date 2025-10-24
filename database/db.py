@@ -38,6 +38,7 @@ class Database:
         series = []
 
         async for doc in cursor:
+            filename = doc['_id']
             link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # your link format
             entry = f"{doc['_id']} ({link})"
             
