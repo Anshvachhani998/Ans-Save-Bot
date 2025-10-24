@@ -52,7 +52,7 @@ async def nightly_update(client):
         logging.info("🕒 Nightly update iteration started")
         
         # Wait 1 minute between iterations (testing; daily ke liye logic change karna padega)
-        await asyncio.sleep(10)
+        await asyncio.sleep(10000)
 
         logging.info(f"🔹 Fetching today's files for user_id: {user_id}")
         combined_movies, combined_series = await db.get_todays_files(user_id)
