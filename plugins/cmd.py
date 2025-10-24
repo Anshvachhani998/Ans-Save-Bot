@@ -178,6 +178,10 @@ async def add_file(client, message):
 from pyrogram.enums import ParseMode
 
 
+from pyrogram.types import ParseMode
+from datetime import datetime
+import re
+
 @Client.on_message(filters.command("today") & filters.private)
 async def show_todays_files(client, message):
     user_id = message.from_user.id
@@ -188,9 +192,10 @@ async def show_todays_files(client, message):
         await message.reply_text("❌ No files added today.")
         return
 
+    # Bold text for header + lists
     text = f"<b>📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
-    # Movies list
+    # Movies
     if movies:
         text += "🍿 Movies\n"
         for i, m in enumerate(movies, 1):
@@ -199,7 +204,7 @@ async def show_todays_files(client, message):
                 fname, link = match.groups()
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    # Series list
+    # Series
     if series:
         text += "\n📺 Series\n"
         for i, s in enumerate(series, 1):
@@ -208,7 +213,12 @@ async def show_todays_files(client, message):
                 fname, link = match.groups()
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    # Footer in blockquote
-    text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
+    text += "</b>"  # end bold before footer
 
-    await message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
+    # Footer in blockquote separately
+    footer = "<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>"
+
+    # Send message in 2 parts to preserve formatting and prevent unwanted link preview
+    await message.reply_text(text, parse_mode=ParseMode.HTML)
+    await message.reply_text(footer, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
+
