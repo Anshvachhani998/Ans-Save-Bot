@@ -31,6 +31,91 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+import asyncio
+from datetime import datetime, timedelta
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+
+CHANNEL_ID = -1003165005860
+
+async def nightly_update():
+    while True:
+        now = datetime.now()
+        # Calculate seconds until next midnight
+        next_midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+        wait_seconds = (next_midnight - now).total_seconds()
+        wait_second = 60
+        await asyncio.sleep(wait_second)
+
+        # Fetch files added today
+        all_users = await db.get_all_users()  # Your method to get all user_ids
+        combined_movies = []
+        combined_series = []
+
+        for user_id in all_users:
+            movies, series = await db.get_todays_files(user_id)
+            combined_movies.extend(movies)
+            combined_series.extend(series)
+
+        if not combined_movies and not combined_series:
+            continue  # Nothing to send
+
+        # Prepare text with splitting if too long
+        text = f"<b>📢 Daily Update\n📅 Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(combined_movies)+len(combined_series)}\n\n"
+        if combined_movies:
+            text += "🍿 Movies\n"
+            for i, m in enumerate(combined_movies, 1):
+                match = re.match(r"(.+) \((.+)\)", m)
+                if match:
+                    fname, link = match.groups()
+                    text += f"({i}) <a href='{link}'>{fname}</a>\n"
+        if combined_series:
+            text += "\n📺 Series\n"
+            for i, s in enumerate(combined_series, 1):
+                match = re.match(r"(.+) \((.+)\)", s)
+                if match:
+                    fname, link = match.groups()
+                    text += f"({i}) <a href='{link}'>{fname}</a>\n"
+
+        text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
+
+        # Split text if > 4000 chars
+        chunks = split_text(text)
+
+        # Button for pin chunk
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/YourAdminUsername")]
+        ])
+
+        # Send all chunks normally except last chunk
+        for chunk in chunks[:-1]:
+            await client.send_message(
+                chat_id=CHANNEL_ID,
+                text=chunk,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+
+        # Send last chunk, pin it
+        last_chunk = chunks[-1]
+        last_msg = await client.send_message(
+            chat_id=CHANNEL_ID,
+            text=last_chunk,
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True,
+            reply_markup=buttons
+        )
+        await client.pin_chat_message(CHANNEL_ID, last_msg.message_id, disable_notification=True)
+
+        # Delete pin notification (assume it comes immediately after pinned msg)
+        import asyncio
+        await asyncio.sleep(1)  # wait a second for notification to appear
+        try:
+            await client.delete_messages(CHANNEL_ID, last_msg.message_id + 1)
+        except:
+            pass
+
+
 # Global user client reference
 TechVJUser: Client | None = None
 
@@ -106,6 +191,7 @@ class Bot(Client):
         try:
             logging.info("🌐 Starting web server...")
             app = web.AppRunner(await web_server())
+            await nightly_update()
             await app.setup()
             await web.TCPSite(app, "0.0.0.0", PORT).start()
             logging.info(f"🌐 Web server running on PORT {PORT}")
