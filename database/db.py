@@ -30,17 +30,32 @@ class Database:
         await self.col.insert_one(user)
 
 
-    async def get_todays_files(self, user_id):
+    async def get_todays_files(self, user_id, date_str: str = None):
+        """
+        Fetch movies and series added on a given date for a specific user.
+        If date_str is None, fetch today's files by default.
+
+        Args:
+            user_id (int): Telegram user ID
+            date_str (str, optional): Date in "YYYY-MM-DD" format. Defaults to None.
+
+        Returns:
+            tuple: (movies, series) lists
+        """
         user_db = self.mydb[str(user_id)]
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        cursor = user_db.find({"date": today_str})
+        
+        # Use provided date or default to today
+        if date_str is None:
+            date_str = datetime.now().strftime("%Y-%m-%d")
+
+        cursor = user_db.find({"date": date_str})
         movies = []
         series = []
 
         async for doc in cursor:
             filename = doc['_id']
             link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # your link format
-            entry = f"{doc['_id']} ({link})"
+            entry = f"{filename} ({link})"
             
             if re.search(r"S\d{2}", filename, re.IGNORECASE):
                 series.append(entry)
@@ -48,7 +63,6 @@ class Database:
                 movies.append(entry)
 
         return movies, series
-
         
     async def is_filename_present(self, filename, user_id):
         """
