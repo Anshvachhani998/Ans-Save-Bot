@@ -206,43 +206,43 @@ async def show_todays_files_pm(client, message):
     movies, series = await db.get_todays_files(user_id)
     
     if not movies and not series:
-        await message.reply_text("❌ No files added today.")
+        await message.reply_text("❌ <b>No files added today.</b>", parse_mode=ParseMode.HTML)
         return
 
     previous_day = datetime.now().date()  # Today's date for display
 
-    # Prepare text using professional template
+    # Prepare text using professional template with full bold
     lines = []
-    lines.append("📢 <b>Hey there! Here's your Daily Media Update 🎉</b>\n")
-    lines.append(f"📆 <b>Date:</b> {previous_day.strftime('%d-%m-%Y')}")
-    lines.append(f"🗂️ <b>Total Files:</b> {len(movies) + len(series)}\n")
+    lines.append("<b>📢 Hey there! Here's your Daily Media Update 🎉</b>\n")
+    lines.append(f"<b>📆 Date:</b> <b>{previous_day.strftime('%d-%m-%Y')}</b>")
+    lines.append(f"<b>🗂️ Total Files:</b> <b>{len(movies) + len(series)}</b>\n")
 
     # Movies section
     if movies:
-        lines.append("🔥 <b>New Movies:</b>")
+        lines.append("<b>🔥 New Movies:</b>")
         for i, m in enumerate(movies, 1):
             match = re.match(r"(.+) \((.+)\)", m)
             if match:
                 fname, link = match.groups()
                 link = link.replace("\n", "").replace("\r", "")
-                lines.append(f"🎬 ({i}) <a href='{link}'>{fname}</a>")
+                lines.append(f"<b>🎬 ({i}) <a href='{link}'>{fname}</a></b>")
     else:
-        lines.append("ℹ️ No new movies today.")
+        lines.append("<b>ℹ️ No new movies today.</b>")
 
     # Series section
     if series:
-        lines.append("\n📺 <b>New Series:</b>")
+        lines.append("\n<b>📺 New Series:</b>")
         for i, s in enumerate(series, 1):
             match = re.match(r"(.+) \((.+)\)", s)
             if match:
                 fname, link = match.groups()
                 link = link.replace("\n", "").replace("\r", "")
-                lines.append(f"⭐ ({i}) <a href='{link}'>{fname}</a>")
+                lines.append(f"<b>⭐ ({i}) <a href='{link}'>{fname}</a></b>")
     else:
-        lines.append("ℹ️ No new series today.")
+        lines.append("<b>ℹ️ No new series today.</b>")
 
-    lines.append("\n💡 Stay updated & never miss your favorite content!")
-    lines.append("<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>")
+    lines.append("\n<b>💡 Stay updated & never miss your favorite content!</b>")
+    lines.append("<b><blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>")
 
     full_text = "\n".join(lines)
 
@@ -253,7 +253,7 @@ async def show_todays_files_pm(client, message):
     for page_num, chunk in enumerate(chunks, 1):
         # Add page info if multiple pages
         if total_pages > 1:
-            chunk += f"\n\n📄 Page {page_num}/{total_pages}"
+            chunk += f"\n\n<b>📄 Page {page_num}/{total_pages}</b>"
         await message.reply_text(
             chunk,
             parse_mode=ParseMode.HTML,
