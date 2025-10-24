@@ -40,7 +40,8 @@ class Database:
         async for doc in cursor:
             link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # your link format
             entry = f"{doc['_id']} ({link})"
-            if doc.get("category") == "Series":
+            
+            if re.search(r"S\d{2}", filename, re.IGNORECASE):
                 series.append(entry)
             else:
                 movies.append(entry)
