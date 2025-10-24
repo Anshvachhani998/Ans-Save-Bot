@@ -180,20 +180,23 @@ from pyrogram.enums import ParseMode
 from datetime import datetime
 import re
 
+
+CHANNEL_ID = -1003165005860  # replace with your channel ID
+
 @Client.on_message(filters.command("today") & filters.private)
 async def show_todays_files(client, message):
     user_id = message.from_user.id
 
+    # Fetch today's files from DB
     movies, series = await db.get_todays_files(user_id)
     
     if not movies and not series:
         await message.reply_text("❌ No files added today.")
         return
 
-    # Bold text for header + lists
+    # 1️⃣ Prepare message text (bold + clickable links)
     text = f"<b>📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
-    # Movies
     if movies:
         text += "🍿 Movies\n"
         for i, m in enumerate(movies, 1):
@@ -202,7 +205,6 @@ async def show_todays_files(client, message):
                 fname, link = match.groups()
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    # Series
     if series:
         text += "\n📺 Series\n"
         for i, s in enumerate(series, 1):
@@ -211,7 +213,32 @@ async def show_todays_files(client, message):
                 fname, link = match.groups()
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    # Footer in blockquote
     text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
 
-    await client.send_message(-1003165005860, text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
+    # 2️⃣ Delete currently pinned message (if exists)
+    chat = await client.get_chat(CHANNEL_ID)
+    if chat.pinned_message:
+        try:
+            await client.delete_messages(CHANNEL_ID, chat.pinned_message.message_id)
+        except:
+            pass
+
+    # 3️⃣ Send new message
+    new_msg = await client.send_message(
+        chat_id=CHANNEL_ID,
+        text=text,
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=False
+    )
+
+    # 4️⃣ Pin the new message (silent pin)
+    await client.pin_chat_message(CHANNEL_ID, new_msg.message_id, disable_notification=True)
+
+    # 5️⃣ Delete Telegram "pinned message" system notification
+    async for msg in client.get_chat_history(CHANNEL_ID, limit=5):
+        if msg.text and "pinned" in msg.text.lower():
+            await client.delete_messages(CHANNEL_ID, msg.message_id)
+            break
+
+    # 6️⃣ Notify user
+    await message.reply_text("✅ Today's files sent and pinned in the channel.")
