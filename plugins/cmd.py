@@ -226,8 +226,6 @@ async def show_todays_files_pm(client, message):
                 fname, link = match.groups()
                 link = link.replace("\n", "").replace("\r", "")
                 lines.append(f"<b>({i}) <a href='{link}'>{fname}</a></b>")
-    else:
-        lines.append("<b>ℹ️ No new movies today.</b>")
 
     # Series section
     if series:
@@ -238,9 +236,7 @@ async def show_todays_files_pm(client, message):
                 fname, link = match.groups()
                 link = link.replace("\n", "").replace("\r", "")
                 lines.append(f"<b>({i}) <a href='{link}'>{fname}</a></b>")
-    else:
-        lines.append("<b>ℹ️ No new series today.</b>")
-
+                
     lines.append("\n<b>💡 Stay updated & never miss your favorite content!</b>")
     lines.append("<b><blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>")
 
