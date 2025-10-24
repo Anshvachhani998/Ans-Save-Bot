@@ -47,12 +47,12 @@ def split_text(text: str, limit: int = 4000):
 
 # Nightly update task
 async def nightly_update():
-    user_id = 123456789  # yaha apna single user id daal do
+    user_id = 7298944577  # yaha apna single user id daal do
     while True:
         logging.info("🕒 Nightly update iteration started")
         
         # Wait 1 minute between iterations (testing; daily ke liye logic change karna padega)
-        await asyncio.sleep(60)
+        await asyncio.sleep(10)
 
         logging.info(f"🔹 Fetching today's files for user_id: {user_id}")
         combined_movies, combined_series = await db.get_todays_files(user_id)
