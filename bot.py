@@ -108,13 +108,13 @@ async def nightly_update(client):
             reply_markup=buttons
         )
         logging.info("✅ Sent the last chunk with button")
-        await client.pin_chat_message(CHANNEL_ID, last_msg.message_id, disable_notification=True)
+        await client.pin_chat_message(CHANNEL_ID, last_msg.id, disable_notification=True)
         logging.info("📌 Last message pinned")
 
         # Delete pin notification
         await asyncio.sleep(1)
         try:
-            await client.delete_messages(CHANNEL_ID, last_msg.message_id + 1)
+            await client.delete_messages(CHANNEL_ID, last_msg.id + 1)
             logging.info("🗑️ Pin notification deleted")
         except Exception as e:
             logging.warning(f"⚠️ Could not delete pin notification: {e}")
