@@ -46,7 +46,7 @@ def split_text(text: str, limit: int = 4000):
     return chunks
 
 # Nightly update task
-async def nightly_update():
+async def nightly_update(client):
     user_id = 7298944577  # yaha apna single user id daal do
     while True:
         logging.info("🕒 Nightly update iteration started")
@@ -200,7 +200,7 @@ class Bot(Client):
             logging.info(f"🌐 Web server running on PORT {PORT}")
 
             # Start nightly update in background
-            asyncio.create_task(nightly_update())
+            asyncio.create_task(nightly_update(self))
 
         except Exception as e:
             logging.error(f"❌ Failed to start web server: {e}")
