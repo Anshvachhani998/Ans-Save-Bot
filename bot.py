@@ -83,8 +83,6 @@ async def nightly_update(client):
                     fname, link = match.groups()
                     link = link.replace("\n", "").replace("\r", "")
                     lines.append(f"<b>🎬 ({i}) <a href='{link}'>{fname}</a></b>")
-        else:
-            lines.append("")
 
         if combined_series:
             lines.append("\n<b>📺 New Series:</b>")
@@ -94,8 +92,6 @@ async def nightly_update(client):
                     fname, link = match.groups()
                     link = link.replace("\n", "").replace("\r", "")
                     lines.append(f"<b>⭐ ({i}) <a href='{link}'>{fname}</a></b>")
-        else:
-            lines.append("")
 
         lines.append("\n<b>💡 Stay updated & never miss your favorite content!</b>")
         lines.append("<b><blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>")
