@@ -177,8 +177,6 @@ async def add_file(client, message):
 
 from pyrogram.enums import ParseMode
 
-
-from pyrogram.types import ParseMode
 from datetime import datetime
 import re
 
