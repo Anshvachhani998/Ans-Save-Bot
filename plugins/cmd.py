@@ -225,7 +225,7 @@ async def show_todays_files_pm(client, message):
             if match:
                 fname, link = match.groups()
                 link = link.replace("\n", "").replace("\r", "")
-                lines.append(f"<b>🎬 ({i}) <a href='{link}'>{fname}</a></b>")
+                lines.append(f"<b>({i}) <a href='{link}'>{fname}</a></b>")
     else:
         lines.append("<b>ℹ️ No new movies today.</b>")
 
@@ -237,7 +237,7 @@ async def show_todays_files_pm(client, message):
             if match:
                 fname, link = match.groups()
                 link = link.replace("\n", "").replace("\r", "")
-                lines.append(f"<b>⭐ ({i}) <a href='{link}'>{fname}</a></b>")
+                lines.append(f"<b>({i}) <a href='{link}'>{fname}</a></b>")
     else:
         lines.append("<b>ℹ️ No new series today.</b>")
 
