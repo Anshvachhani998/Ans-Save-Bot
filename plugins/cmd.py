@@ -158,3 +158,20 @@ async def git_pull(client, message):
 
     await message.reply_text(f"📦 Git Pull Output:\n```\n{output}\n```")
 
+
+@Client.on_message(filters.command("add") & filters.private)
+async def add_file(client, message):
+    if len(message.command) < 2:
+        await message.reply_text("❌ Usage: /add <file_name>")
+        return
+
+    file_name = message.command[1]
+    user_id = message.from_user.id
+    msg_id = message.message_id
+
+    success = await db.add_name(user_id, file_name, msg_id)
+    if success:
+        await message.reply_text(f"✅ File `{file_name}` added successfully!")
+    else:
+        await message.reply_text(f"⚠️ File `{file_name}` already exists in your database.")
+
