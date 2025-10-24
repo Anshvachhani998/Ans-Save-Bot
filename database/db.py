@@ -48,6 +48,7 @@ class Database:
         if date_str is None:
             date_str = datetime.now().strftime("%Y-%m-%d")
 
+        date_str = date_obj.strftime("%Y-%m-%d")  # Convert date to string
         cursor = user_db.find({"date": date_str})
         movies = []
         series = []
