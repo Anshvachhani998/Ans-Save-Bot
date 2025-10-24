@@ -211,12 +211,7 @@ async def show_todays_files(client, message):
                 fname, link = match.groups()
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    text += "</b>"  # end bold before footer
+    # Footer in blockquote
+    text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
 
-    # Footer in blockquote separately
-    footer = "<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>"
-
-    # Send message in 2 parts to preserve formatting and prevent unwanted link preview
-    await message.reply_text(text, parse_mode=ParseMode.HTML)
-    await message.reply_text(footer, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
-
+    await message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
