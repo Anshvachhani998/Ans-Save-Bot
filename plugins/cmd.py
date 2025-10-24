@@ -222,18 +222,14 @@ async def show_todays_files(client, message):
         chat_id=CHANNEL_ID,
         text=text,
         parse_mode=ParseMode.HTML,
-        disable_web_page_preview=False
+        disable_web_page_preview=True
     )
 
-    # 4️⃣ Pin the new message silently
     await client.pin_chat_message(CHANNEL_ID, new_msg.id, disable_notification=True)
 
-    # 5️⃣ Delete the Telegram “pinned message” system notification
     try:
         pin_notification_id = new_msg.id + 1  # usually comes right after pinned message
         await client.delete_messages(CHANNEL_ID, pin_notification_id)
     except:
-        pass  # ignore if cannot delete
-
-    # 6️⃣ Notify the user privately
+        pass
     await message.reply_text("✅ Today's files sent and pinned in the channel.")
