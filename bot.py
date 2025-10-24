@@ -191,7 +191,7 @@ class Bot(Client):
         try:
             logging.info("🌐 Starting web server...")
             app = web.AppRunner(await web_server())
-            await nightly_update()
+            asyncio.create_task(nightly_update())
             await app.setup()
             await web.TCPSite(app, "0.0.0.0", PORT).start()
             logging.info(f"🌐 Web server running on PORT {PORT}")
