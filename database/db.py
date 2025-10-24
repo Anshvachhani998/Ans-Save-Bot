@@ -33,34 +33,26 @@ class Database:
 
 
     async def get_todays_files(self, user_id, date_obj: str | None = None):
-        """
-        Fetch movies and series for a given user and date.
-        If date_obj is None, defaults to today.
-        date_obj can be datetime.date, datetime.datetime, or string 'YYYY-MM-DD'.
-        """
         user_db = self.mydb[str(user_id)]
 
-        # Default to today
         if date_obj is None:
             date_obj = datetime.now().date()
-        
-        # Convert to string if it's date object
-        if isinstance(date_obj, (datetime, datetime.date)):
+
+        # Correct isinstance check
+        if isinstance(date_obj, (datetime, date)):
             date_str = date_obj.strftime("%Y-%m-%d")
         else:
-            date_str = str(date_obj)  # already string
-        
-        cursor = user_db.find({"date": date_str})
+            date_str = str(date_obj)
 
+        cursor = user_db.find({"date": date_str})
         movies = []
         series = []
 
         async for doc in cursor:
             filename = doc['_id']
-            link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # Update link format if needed
+            link = f"https://t.me/c/2181749207/{doc['msg_id']}"
             entry = f"{filename} ({link})"
-            
-            # Detect series by Sxx pattern
+
             if re.search(r"S\d{2}", filename, re.IGNORECASE):
                 series.append(entry)
             else:
