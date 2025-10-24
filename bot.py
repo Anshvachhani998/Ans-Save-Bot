@@ -104,7 +104,7 @@ async def nightly_update(client):
 
         # Button for last message
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/YourAdminUsername")]
+            [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/MovieGroup_Support")]
         ])
 
         for page_num, chunk in enumerate(chunks, 1):
