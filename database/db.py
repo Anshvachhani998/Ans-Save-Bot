@@ -38,7 +38,7 @@ class Database:
         result = await user_db.count_documents({"_id": filename})
         return result > 0
 
-    async def add_name(self, user_id, filename, msg_id, file_name):
+    async def add_name(self, user_id, filename, msg_id):
         """
         Add a filename along with message ID, file name, and timestamp to the DB.
         """
@@ -53,7 +53,6 @@ class Database:
         user_entry = {
             "_id": filename,
             "msg_id": msg_id,
-            "file_name": file_name,
             "date": now.strftime("%Y-%m-%d"),
         }
 
