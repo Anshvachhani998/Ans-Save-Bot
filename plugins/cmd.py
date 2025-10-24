@@ -167,7 +167,7 @@ async def add_file(client, message):
 
     file_name = message.command[1]
     user_id = message.from_user.id
-    msg_id = message.message_id
+    msg_id = message.id
 
     success = await db.add_name(user_id, file_name, msg_id)
     if success:
