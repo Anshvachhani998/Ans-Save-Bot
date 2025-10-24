@@ -45,6 +45,7 @@ async def nightly_update():
         next_midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
         wait_seconds = (next_midnight - now).total_seconds()
         wait_second = 60
+        import asyncio
         await asyncio.sleep(wait_second)
 
         # Fetch files added today
