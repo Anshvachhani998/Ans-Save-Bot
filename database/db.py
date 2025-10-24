@@ -30,7 +30,7 @@ class Database:
         await self.col.insert_one(user)
 
 
-    async def get_todays_files(self, user_id, date_str: str = None):
+    async def get_todays_files(self, user_id, date_obj: str = None):
         """
         Fetch movies and series added on a given date for a specific user.
         If date_str is None, fetch today's files by default.
@@ -45,8 +45,8 @@ class Database:
         user_db = self.mydb[str(user_id)]
         
         # Use provided date or default to today
-        if date_str is None:
-            date_str = datetime.now().strftime("%Y-%m-%d")
+        if date_obj is None:
+            date_obj = datetime.now().strftime("%Y-%m-%d")
 
         date_str = date_obj.strftime("%Y-%m-%d")  # Convert date to string
         cursor = user_db.find({"date": date_str})
