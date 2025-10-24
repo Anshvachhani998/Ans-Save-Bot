@@ -232,12 +232,12 @@ async def show_todays_files(client, message):
     )
 
     # 4️⃣ Pin the new message (silent pin)
-    await client.pin_chat_message(CHANNEL_ID, new_msg.message_id, disable_notification=True)
+    await client.pin_chat_message(CHANNEL_ID, new_msg.id, disable_notification=True)
 
     # 5️⃣ Delete Telegram "pinned message" system notification
     async for msg in client.get_chat_history(CHANNEL_ID, limit=5):
         if msg.text and "pinned" in msg.text.lower():
-            await client.delete_messages(CHANNEL_ID, msg.message_id)
+            await client.delete_messages(CHANNEL_ID, msg.id)
             break
 
     # 6️⃣ Notify user
