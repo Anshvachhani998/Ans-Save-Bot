@@ -188,13 +188,12 @@ async def show_todays_files(client, message):
         await message.reply_text("❌ No files added today.")
         return
 
-    text = f"📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
+    text = f"<b>📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
     # Movies list
     if movies:
         text += "🍿 Movies\n"
         for i, m in enumerate(movies, 1):
-            # filename and link extraction
             match = re.match(r"(.+) \((.+)\)", m)
             if match:
                 fname, link = match.groups()
@@ -210,6 +209,6 @@ async def show_todays_files(client, message):
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
     # Footer in blockquote
-    text += f"\n<blockquote>Powered by - (<a href='https://t.me/Ans_Links'>AnS Links 🔗</a>)</blockquote>"
+    text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
 
-    await message.reply_text(text, parse_mode=ParseMode.HTML)
+    await message.reply_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
