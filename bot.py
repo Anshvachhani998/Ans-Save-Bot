@@ -47,7 +47,7 @@ def split_text(text: str, limit: int = 4000):
 
 # Nightly update task
 async def nightly_update(client):
-    user_id = 7298944577
+    user_id = 7298944577  # Single user ID
     while True:
         now = datetime.now()
         # Calculate seconds until next midnight
@@ -67,65 +67,82 @@ async def nightly_update(client):
 
         if not combined_movies and not combined_series:
             logging.info("ℹ️ No new files to send, skipping this iteration")
-            continue  # Nothing to send
+            continue
 
-        # Prepare text
-        text = f"<b>📢 Daily Update\n📅 Date: {previous_day.strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(combined_movies)+len(combined_series)}\n\n"
+        # Prepare professional full-bold text
+        lines = []
+        lines.append("<b>📢 Hey there! Here's your Daily Media Update 🎉</b>\n")
+        lines.append(f"<b>📆 Date:</b> <b>{previous_day.strftime('%d-%m-%Y')}</b>")
+        lines.append(f"<b>🗂️ Total Files:</b> <b>{len(combined_movies) + len(combined_series)}</b>\n")
+
         if combined_movies:
-            text += "🍿 Movies\n"
+            lines.append("<b>🔥 New Movies:</b>")
             for i, m in enumerate(combined_movies, 1):
                 match = re.match(r"(.+) \((.+)\)", m)
                 if match:
                     fname, link = match.groups()
-                    text += f"({i}) <a href='{link}'>{fname}</a>\n"
+                    link = link.replace("\n", "").replace("\r", "")
+                    lines.append(f"<b>🎬 ({i}) <a href='{link}'>{fname}</a></b>")
+        else:
+            lines.append("<b>ℹ️ No new movies today.</b>")
+
         if combined_series:
-            text += "\n📺 Series\n"
+            lines.append("\n<b>📺 New Series:</b>")
             for i, s in enumerate(combined_series, 1):
                 match = re.match(r"(.+) \((.+)\)", s)
                 if match:
                     fname, link = match.groups()
-                    text += f"({i}) <a href='{link}'>{fname}</a>\n"
+                    link = link.replace("\n", "").replace("\r", "")
+                    lines.append(f"<b>⭐ ({i}) <a href='{link}'>{fname}</a></b>")
+        else:
+            lines.append("<b>ℹ️ No new series today.</b>")
 
-        text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
+        lines.append("\n<b>💡 Stay updated & never miss your favorite content!</b>")
+        lines.append("<b><blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>")
 
-        # Split text into chunks
-        chunks = split_text(text)
+        full_text = "\n".join(lines)
+
+        # Split into chunks if needed
+        chunks = split_text(full_text)
+        total_pages = len(chunks)
 
         # Button for last message
         buttons = InlineKeyboardMarkup([
             [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/YourAdminUsername")]
         ])
 
-        # Send chunks
-        for chunk in chunks[:-1]:
-            await client.send_message(
-                chat_id=CHANNEL_ID,
-                text=chunk,
-                parse_mode=ParseMode.HTML,
-                disable_web_page_preview=True
-            )
-            logging.info("✅ Sent a chunk of the update")
+        for page_num, chunk in enumerate(chunks, 1):
+            if total_pages > 1:
+                chunk += f"\n\n<b>📄 Page {page_num}/{total_pages}</b>"
 
-        last_chunk = chunks[-1]
-        last_msg = await client.send_message(
-            chat_id=CHANNEL_ID,
-            text=last_chunk,
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True,
-            reply_markup=buttons
-        )
-        logging.info("✅ Sent the last chunk with button")
-        await client.pin_chat_message(CHANNEL_ID, last_msg.id, disable_notification=True)
-        logging.info("📌 Last message pinned")
+            if page_num == total_pages:
+                # Last chunk with button & pin
+                last_msg = await client.send_message(
+                    chat_id=CHANNEL_ID,
+                    text=chunk,
+                    parse_mode=ParseMode.HTML,
+                    disable_web_page_preview=True,
+                    reply_markup=buttons
+                )
+                logging.info("✅ Sent last chunk with button")
+                await client.pin_chat_message(CHANNEL_ID, last_msg.id, disable_notification=True)
+                logging.info("📌 Last message pinned")
 
-        # Delete pin notification
-        await asyncio.sleep(1)
-        try:
-            await client.delete_messages(CHANNEL_ID, last_msg.id + 1)
-            logging.info("🗑️ Pin notification deleted")
-        except Exception as e:
-            logging.warning(f"⚠️ Could not delete pin notification: {e}")
-
+                # Delete pin notification
+                await asyncio.sleep(1)
+                try:
+                    await client.delete_messages(CHANNEL_ID, last_msg.id + 1)
+                    logging.info("🗑️ Pin notification deleted")
+                except Exception as e:
+                    logging.warning(f"⚠️ Could not delete pin notification: {e}")
+            else:
+                await client.send_message(
+                    chat_id=CHANNEL_ID,
+                    text=chunk,
+                    parse_mode=ParseMode.HTML,
+                    disable_web_page_preview=True
+                )
+                logging.info("✅ Sent a chunk of the update")
 TechVJUser: Client | None = None
 
 class Bot(Client):
