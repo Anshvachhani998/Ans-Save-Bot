@@ -30,34 +30,35 @@ class Database:
         await self.col.insert_one(user)
 
 
-    async def get_todays_files(self, user_id, date_obj: str = None):
+    async def get_todays_files(self, user_id, date_obj: str | None = None):
         """
-        Fetch movies and series added on a given date for a specific user.
-        If date_str is None, fetch today's files by default.
-
-        Args:
-            user_id (int): Telegram user ID
-            date_str (str, optional): Date in "YYYY-MM-DD" format. Defaults to None.
-
-        Returns:
-            tuple: (movies, series) lists
+        Fetch movies and series for a given user and date.
+        If date_obj is None, defaults to today.
+        date_obj can be datetime.date, datetime.datetime, or string 'YYYY-MM-DD'.
         """
         user_db = self.mydb[str(user_id)]
-        
-        # Use provided date or default to today
-        if date_obj is None:
-            date_obj = datetime.now().strftime("%Y-%m-%d")
 
-        date_str = date_obj.strftime("%Y-%m-%d")  # Convert date to string
+        # Default to today
+        if date_obj is None:
+            date_obj = datetime.now().date()
+        
+        # Convert to string if it's date object
+        if isinstance(date_obj, (datetime, datetime.date)):
+            date_str = date_obj.strftime("%Y-%m-%d")
+        else:
+            date_str = str(date_obj)  # already string
+        
         cursor = user_db.find({"date": date_str})
+
         movies = []
         series = []
 
         async for doc in cursor:
             filename = doc['_id']
-            link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # your link format
+            link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # Update link format if needed
             entry = f"{filename} ({link})"
             
+            # Detect series by Sxx pattern
             if re.search(r"S\d{2}", filename, re.IGNORECASE):
                 series.append(entry)
             else:
