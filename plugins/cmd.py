@@ -197,7 +197,7 @@ async def show_todays_files(client, message):
     # 2️⃣ Prepare message text (bold + clickable links)
     text = f"<b>📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
-    # Movies list
+    # Movies
     if movies:
         text += "🍿 Movies\n"
         for i, m in enumerate(movies, 1):
@@ -206,7 +206,7 @@ async def show_todays_files(client, message):
                 fname, link = match.groups()
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    # Series list
+    # Series
     if series:
         text += "\n📺 Series\n"
         for i, s in enumerate(series, 1):
@@ -217,15 +217,7 @@ async def show_todays_files(client, message):
 
     text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
 
-    # 3️⃣ Delete currently pinned message (if exists)
-    chat = await client.get_chat(CHANNEL_ID)
-    if chat.pinned_message:
-        try:
-            await client.delete_messages(CHANNEL_ID, chat.pinned_message.id)
-        except:
-            pass  # ignore errors if cannot delete
-
-    # 4️⃣ Send new message
+    # 3️⃣ Send new message
     new_msg = await client.send_message(
         chat_id=CHANNEL_ID,
         text=text,
@@ -233,8 +225,15 @@ async def show_todays_files(client, message):
         disable_web_page_preview=False
     )
 
-    # 5️⃣ Pin the new message silently
+    # 4️⃣ Pin the new message silently
     await client.pin_chat_message(CHANNEL_ID, new_msg.id, disable_notification=True)
 
-    # 6️⃣ Notify the user
+    # 5️⃣ Delete the Telegram “pinned message” system notification
+    try:
+        pin_notification_id = new_msg.id + 1  # usually comes right after pinned message
+        await client.delete_messages(CHANNEL_ID, pin_notification_id)
+    except:
+        pass  # ignore if cannot delete
+
+    # 6️⃣ Notify the user privately
     await message.reply_text("✅ Today's files sent and pinned in the channel.")
