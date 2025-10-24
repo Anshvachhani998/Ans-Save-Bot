@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-import os
+import os, re
 import time
 import logging 
 import aiohttp
@@ -190,17 +190,26 @@ async def show_todays_files(client, message):
 
     text = f"📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
 
+    # Movies list
     if movies:
         text += "🍿 Movies\n"
         for i, m in enumerate(movies, 1):
-            text += f"({i}) {m}\n"
+            # filename and link extraction
+            match = re.match(r"(.+) \((.+)\)", m)
+            if match:
+                fname, link = match.groups()
+                text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
+    # Series list
     if series:
         text += "\n📺 Series\n"
         for i, s in enumerate(series, 1):
-            text += f"({i}) {s}\n"
+            match = re.match(r"(.+) \((.+)\)", s)
+            if match:
+                fname, link = match.groups()
+                text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
-    # Add only the last line in blockquote
-    text += f"\n<blockquote>Powered by - Movie House 🏠 (https://t.me/m_h_updates)</blockquote>"
+    # Footer in blockquote
+    text += f"\n<blockquote>Powered by - Movie House 🏠 (<a href='https://t.me/m_h_updates'>Updates</a>)</blockquote>"
 
     await message.reply_text(text, parse_mode=ParseMode.HTML)
