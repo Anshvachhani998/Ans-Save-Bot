@@ -181,9 +181,9 @@ from pyrogram.enums import ParseMode
 @Client.on_message(filters.command("today") & filters.private)
 async def show_todays_files(client, message):
     user_id = message.from_user.id
-    db_instance = FileDB(mydb)
 
-    movies, series = await db_instance.get_todays_files(user_id)
+    movies, series = await db.get_todays_files(user_id)
+    
     if not movies and not series:
         await message.reply_text("❌ No files added today.")
         return
