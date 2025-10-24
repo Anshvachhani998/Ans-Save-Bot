@@ -192,25 +192,21 @@ async def show_todays_files_pm(client, message):
         await message.reply_text("❌ No files added today.")
         return
 
-    # Prepare text same as pehle
-    text = f"<b>📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
-    if movies:
-        text += "🍿 Movies\n"
-        for i, m in enumerate(movies, 1):
-            match = re.match(r"(.+) \((.+)\)", m)
-            if match:
-                fname, link = match.groups()
-                text += f"({i}) <a href='{link}'>{fname}</a>\n"
+    previous_day = datetime.now().date()  # aaj ki date show karne ke liye
 
-    if series:
-        text += "\n📺 Series\n"
-        for i, s in enumerate(series, 1):
-            match = re.match(r"(.+) \((.+)\)", s)
-            if match:
-                fname, link = match.groups()
-                text += f"({i}) <a href='{link}'>{fname}</a>\n"
+    # Prepare text using professional daily update template
+    text = f"""
+<b>📢 Hey there! Here's your Daily Media Update 🎉</b>
 
-    text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
+📆 <b>Date:</b> {previous_day.strftime('%d-%m-%Y')}
+🗂️ <b>Total Files:</b> {len(movies)+len(series)}
+
+{"🔥 <b>New Movies:</b>\n" + "\n".join(f"🎬 ({i+1}) <a href='{m.split('(')[-1][:-1]}'>{m.split(' (')[0]}</a>" for i, m in enumerate(movies)) if movies else "ℹ️ No new movies today."}
+{"📺 <b>New Series:</b>\n" + "\n".join(f"⭐ ({i+1}) <a href='{s.split('(')[-1][:-1]}'>{s.split(' (')[0]}</a>" for i, s in enumerate(series)) if series else "ℹ️ No new series today."}
+
+💡 Stay updated & never miss your favorite content!
+<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>
+"""
 
     await message.reply_text(
         text,
