@@ -182,6 +182,22 @@ import re
 
 
 
+from pyrogram import Client, filters
+import re
+from datetime import datetime
+
+# Function to split text into chunks of max `limit` characters
+def split_text(text, limit=4000):
+    chunks = []
+    while len(text) > limit:
+        split_at = text.rfind("\n", 0, limit)
+        if split_at == -1:
+            split_at = limit
+        chunks.append(text[:split_at])
+        text = text[split_at:].lstrip()
+    chunks.append(text)
+    return chunks
+
 @Client.on_message(filters.command("today") & filters.private)
 async def show_todays_files_pm(client, message):
     user_id = message.from_user.id
@@ -208,7 +224,6 @@ async def show_todays_files_pm(client, message):
             match = re.match(r"(.+) \((.+)\)", m)
             if match:
                 fname, link = match.groups()
-                # Escape link/newline safely
                 link = link.replace("\n", "").replace("\r", "")
                 lines.append(f"🎬 ({i}) <a href='{link}'>{fname}</a>")
     else:
@@ -229,10 +244,18 @@ async def show_todays_files_pm(client, message):
     lines.append("\n💡 Stay updated & never miss your favorite content!")
     lines.append("<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>")
 
-    text = "\n".join(lines)
+    full_text = "\n".join(lines)
 
-    await message.reply_text(
-        text,
-        parse_mode=ParseMode.HTML,
-        disable_web_page_preview=True
-    )
+    # Split text into multiple messages if > 4000 chars
+    chunks = split_text(full_text, limit=4000)
+    total_pages = len(chunks)
+
+    for page_num, chunk in enumerate(chunks, 1):
+        # Add page info if multiple pages
+        if total_pages > 1:
+            chunk += f"\n\n📄 Page {page_num}/{total_pages}"
+        await message.reply_text(
+            chunk,
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True
+        )
