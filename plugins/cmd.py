@@ -175,3 +175,26 @@ async def add_file(client, message):
     else:
         await message.reply_text(f"⚠️ File `{file_name}` already exists in your database.")
 
+
+@Client.on_message(filters.command("today") & filters.private)
+async def show_todays_files(client, message):
+    user_id = message.from_user.id
+
+    movies, series = await db.get_todays_files(user_id)
+    if not movies and not series:
+        await message.reply_text("❌ No files added today.")
+        return
+
+    text = f"📢 Recently Added Files List\n\n📅 Added Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(movies)+len(series)}\n📄 Page 1/1\n\n"
+
+    if movies:
+        text += "🍿 Movies\n"
+        for i, m in enumerate(movies, 1):
+            text += f"({i}) {m}\n"
+    if series:
+        text += "\n📺 Series\n"
+        for i, s in enumerate(series, 1):
+            text += f"({i}) {s}\n"
+
+    text += "\nPowered by - Movie House 🏠 (https://t.me/m_h_updates)"
+    await message.reply_text(text)
