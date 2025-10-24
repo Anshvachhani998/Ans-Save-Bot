@@ -214,4 +214,4 @@ async def show_todays_files(client, message):
     # Footer in blockquote
     text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
 
-    await message.send_message(-1003165005860, text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
+    await client.send_message(-1003165005860, text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
