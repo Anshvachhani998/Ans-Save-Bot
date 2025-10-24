@@ -186,31 +186,53 @@ import re
 async def show_todays_files_pm(client, message):
     user_id = message.from_user.id
 
+    # Fetch today's files from DB
     movies, series = await db.get_todays_files(user_id)
     
     if not movies and not series:
         await message.reply_text("❌ No files added today.")
         return
 
-    previous_day = datetime.now().date()  # aaj ki date show karne ke liye
+    previous_day = datetime.now().date()  # Today's date for display
 
-    # Prepare text using professional daily update template
-    text = f"""
-<b>📢 Hey there! Here's your Daily Media Update 🎉</b>
+    # Prepare text using professional template
+    lines = []
+    lines.append("📢 <b>Hey there! Here's your Daily Media Update 🎉</b>\n")
+    lines.append(f"📆 <b>Date:</b> {previous_day.strftime('%d-%m-%Y')}")
+    lines.append(f"🗂️ <b>Total Files:</b> {len(movies) + len(series)}\n")
 
-📆 <b>Date:</b> {previous_day.strftime('%d-%m-%Y')}
-🗂️ <b>Total Files:</b> {len(movies)+len(series)}
+    # Movies section
+    if movies:
+        lines.append("🔥 <b>New Movies:</b>")
+        for i, m in enumerate(movies, 1):
+            match = re.match(r"(.+) \((.+)\)", m)
+            if match:
+                fname, link = match.groups()
+                # Escape link/newline safely
+                link = link.replace("\n", "").replace("\r", "")
+                lines.append(f"🎬 ({i}) <a href='{link}'>{fname}</a>")
+    else:
+        lines.append("ℹ️ No new movies today.")
 
-{"🔥 <b>New Movies:</b>\n" + "\n".join(f"🎬 ({i+1}) <a href='{m.split('(')[-1][:-1]}'>{m.split(' (')[0]}</a>" for i, m in enumerate(movies)) if movies else "ℹ️ No new movies today."}
-{"📺 <b>New Series:</b>\n" + "\n".join(f"⭐ ({i+1}) <a href='{s.split('(')[-1][:-1]}'>{s.split(' (')[0]}</a>" for i, s in enumerate(series)) if series else "ℹ️ No new series today."}
+    # Series section
+    if series:
+        lines.append("\n📺 <b>New Series:</b>")
+        for i, s in enumerate(series, 1):
+            match = re.match(r"(.+) \((.+)\)", s)
+            if match:
+                fname, link = match.groups()
+                link = link.replace("\n", "").replace("\r", "")
+                lines.append(f"⭐ ({i}) <a href='{link}'>{fname}</a>")
+    else:
+        lines.append("ℹ️ No new series today.")
 
-💡 Stay updated & never miss your favorite content!
-<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>
-"""
+    lines.append("\n💡 Stay updated & never miss your favorite content!")
+    lines.append("<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote>")
+
+    text = "\n".join(lines)
 
     await message.reply_text(
         text,
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True
     )
-
