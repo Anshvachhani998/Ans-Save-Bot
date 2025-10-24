@@ -47,15 +47,19 @@ def split_text(text: str, limit: int = 4000):
 
 # Nightly update task
 async def nightly_update():
-    user_id = 7298944577  # yaha apna single user id daal do
+    user_id = 123456789  # yaha apna single user id daal do
     while True:
+        logging.info("🕒 Nightly update iteration started")
+        
         # Wait 1 minute between iterations (testing; daily ke liye logic change karna padega)
         await asyncio.sleep(60)
 
-        # Fetch files added today for this single user
+        logging.info(f"🔹 Fetching today's files for user_id: {user_id}")
         combined_movies, combined_series = await db.get_todays_files(user_id)
+        logging.info(f"📂 Found {len(combined_movies)} movies and {len(combined_series)} series")
 
         if not combined_movies and not combined_series:
+            logging.info("ℹ️ No new files to send, skipping this iteration")
             continue  # Nothing to send
 
         # Prepare text
@@ -93,6 +97,7 @@ async def nightly_update():
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True
             )
+            logging.info("✅ Sent a chunk of the update")
 
         last_chunk = chunks[-1]
         last_msg = await client.send_message(
@@ -102,17 +107,20 @@ async def nightly_update():
             disable_web_page_preview=True,
             reply_markup=buttons
         )
+        logging.info("✅ Sent the last chunk with button")
         await client.pin_chat_message(CHANNEL_ID, last_msg.message_id, disable_notification=True)
+        logging.info("📌 Last message pinned")
 
         # Delete pin notification
         await asyncio.sleep(1)
         try:
             await client.delete_messages(CHANNEL_ID, last_msg.message_id + 1)
-        except:
-            pass
+            logging.info("🗑️ Pin notification deleted")
+        except Exception as e:
+            logging.warning(f"⚠️ Could not delete pin notification: {e}")
 
 
-# Global user client reference
+
 TechVJUser: Client | None = None
 
 class Bot(Client):
