@@ -210,6 +210,6 @@ async def show_todays_files(client, message):
                 text += f"({i}) <a href='{link}'>{fname}</a>\n"
 
     # Footer in blockquote
-    text += f"\n<blockquote>Powered by - Movie House 🏠 (<a href='https://t.me/m_h_updates'>Updates</a>)</blockquote>"
+    text += f"\n<blockquote>Powered by - (<a href='https://t.me/Ans_Links'>AnS Links 🔗</a>)</blockquote>"
 
     await message.reply_text(text, parse_mode=ParseMode.HTML)
