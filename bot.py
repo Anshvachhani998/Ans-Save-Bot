@@ -54,7 +54,7 @@ async def nightly_update(client):
         next_midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
         wait_seconds = (next_midnight - now).total_seconds()
         logging.info(f"🕒 Waiting {wait_seconds} seconds until midnight for nightly update")
-        await asyncio.sleep(10)
+        await asyncio.sleep(wait_seconds)
 
         logging.info("🕒 Nightly update iteration started")
 
