@@ -47,19 +47,13 @@ def split_text(text: str, limit: int = 4000):
 
 # Nightly update task
 async def nightly_update():
+    user_id = 7298944577  # yaha apna single user id daal do
     while True:
-        # Wait 1 minute between iterations (can change to daily if needed)
+        # Wait 1 minute between iterations (testing; daily ke liye logic change karna padega)
         await asyncio.sleep(60)
 
-        # Fetch files added today
-        all_users = await db.get_all_users()  # Your method to get all user_ids
-        combined_movies = []
-        combined_series = []
-
-        for user_id in all_users:
-            movies, series = await db.get_todays_files(user_id)
-            combined_movies.extend(movies)
-            combined_series.extend(series)
+        # Fetch files added today for this single user
+        combined_movies, combined_series = await db.get_todays_files(user_id)
 
         if not combined_movies and not combined_series:
             continue  # Nothing to send
@@ -116,6 +110,7 @@ async def nightly_update():
             await client.delete_messages(CHANNEL_ID, last_msg.message_id + 1)
         except:
             pass
+
 
 # Global user client reference
 TechVJUser: Client | None = None
