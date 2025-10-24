@@ -11,7 +11,7 @@ class Database:
         self.db = self.client[DB_NAME]
         self.col = self.db["newusers"]
         self.downloads_collection = self.db["downloads"]
-        self.mydb = mydb = db["filename"]
+        self.mydb = mydb = self.db["filename"]
 
 
     def new_user(self, id, name):
