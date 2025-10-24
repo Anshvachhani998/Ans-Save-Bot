@@ -28,7 +28,25 @@ class Database:
     async def add_user(self, id, name):
         user = self.new_user(id, name)
         await self.col.insert_one(user)
-            
+
+
+    async def get_todays_files(self, user_id):
+        user_db = self.mydb[str(user_id)]
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        cursor = user_db.find({"date": today_str})
+        movies = []
+        series = []
+
+        async for doc in cursor:
+            link = f"https://t.me/c/2181749207/{doc['msg_id']}"  # your link format
+            entry = f"{doc['_id']} ({link})"
+            if doc.get("category") == "Series":
+                series.append(entry)
+            else:
+                movies.append(entry)
+
+        return movies, series
+
         
     async def is_filename_present(self, filename, user_id):
         """
