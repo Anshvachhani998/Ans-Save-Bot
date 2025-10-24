@@ -47,15 +47,22 @@ def split_text(text: str, limit: int = 4000):
 
 # Nightly update task
 async def nightly_update(client):
-    user_id = 7298944577  # yaha apna single user id daal do
+    user_id = 7298944577
     while True:
-        logging.info("🕒 Nightly update iteration started")
-        
-        # Wait 1 minute between iterations (testing; daily ke liye logic change karna padega)
-        await asyncio.sleep(10000)
+        now = datetime.now()
+        # Calculate seconds until next midnight
+        next_midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
+        wait_seconds = (next_midnight - now).total_seconds()
+        logging.info(f"🕒 Waiting {wait_seconds} seconds until midnight for nightly update")
+        await asyncio.sleep(wait_seconds)
 
-        logging.info(f"🔹 Fetching today's files for user_id: {user_id}")
-        combined_movies, combined_series = await db.get_todays_files(user_id)
+        logging.info("🕒 Nightly update iteration started")
+
+        # Use previous day to fetch files (so we get 'today's' files for the day that just ended)
+        previous_day = datetime.now().date() - timedelta(days=1)
+        logging.info(f"🔹 Fetching files for user_id: {user_id} and date: {previous_day}")
+
+        combined_movies, combined_series = await db.get_files_for_date(user_id, previous_day)
         logging.info(f"📂 Found {len(combined_movies)} movies and {len(combined_series)} series")
 
         if not combined_movies and not combined_series:
@@ -63,7 +70,7 @@ async def nightly_update(client):
             continue  # Nothing to send
 
         # Prepare text
-        text = f"<b>📢 Daily Update\n📅 Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(combined_movies)+len(combined_series)}\n\n"
+        text = f"<b>📢 Daily Update\n📅 Date: {previous_day.strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(combined_movies)+len(combined_series)}\n\n"
         if combined_movies:
             text += "🍿 Movies\n"
             for i, m in enumerate(combined_movies, 1):
@@ -118,8 +125,6 @@ async def nightly_update(client):
             logging.info("🗑️ Pin notification deleted")
         except Exception as e:
             logging.warning(f"⚠️ Could not delete pin notification: {e}")
-
-
 
 TechVJUser: Client | None = None
 
