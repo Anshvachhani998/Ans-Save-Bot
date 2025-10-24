@@ -1,25 +1,25 @@
 import logging
-import logging.config
 import os
 import asyncio
-from pyrogram import Client, __version__
-from pyrogram.raw.all import layer
-from aiohttp import web
+import re
+from datetime import date, datetime, timedelta
 import pytz
-from datetime import date, datetime
+
+from pyrogram import Client, __version__, types, utils as pyroutils
+from pyrogram.raw.all import layer
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.enums import ParseMode
+from aiohttp import web
+
 from plugins import web_server
 from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, PORT
+from database.db import db
 
 try:
     from info import STRING_SESSION, LOGIN_SYSTEM
 except Exception:
     STRING_SESSION = None
     LOGIN_SYSTEM = False
-
-from pyrogram import types
-from pyrogram import utils as pyroutils
-from database.db import db
-from asyncio import sleep
 
 # adjust pyrogram minimum ids if needed
 pyroutils.MIN_CHAT_ID = -999999999999
@@ -31,22 +31,25 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-import asyncio
-from datetime import datetime, timedelta
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-
 CHANNEL_ID = -1003165005860
 
+# Helper: split text into 4000-char chunks
+def split_text(text: str, limit: int = 4000):
+    chunks = []
+    while len(text) > limit:
+        idx = text.rfind("\n", 0, limit)
+        if idx == -1:
+            idx = limit
+        chunks.append(text[:idx])
+        text = text[idx:]
+    chunks.append(text)
+    return chunks
+
+# Nightly update task
 async def nightly_update():
     while True:
-        now = datetime.now()
-        # Calculate seconds until next midnight
-        next_midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
-        wait_seconds = (next_midnight - now).total_seconds()
-        wait_second = 60
-        import asyncio
-        await asyncio.sleep(wait_second)
+        # Wait 1 minute between iterations (can change to daily if needed)
+        await asyncio.sleep(60)
 
         # Fetch files added today
         all_users = await db.get_all_users()  # Your method to get all user_ids
@@ -61,7 +64,7 @@ async def nightly_update():
         if not combined_movies and not combined_series:
             continue  # Nothing to send
 
-        # Prepare text with splitting if too long
+        # Prepare text
         text = f"<b>📢 Daily Update\n📅 Date: {datetime.now().strftime('%d-%m-%Y')}\n🗃️ Total Files: {len(combined_movies)+len(combined_series)}\n\n"
         if combined_movies:
             text += "🍿 Movies\n"
@@ -80,15 +83,15 @@ async def nightly_update():
 
         text += f"\n<blockquote>Powered by - <a href='https://t.me/Ans_Links'>AnS Links 🔗</a></blockquote></b>"
 
-        # Split text if > 4000 chars
+        # Split text into chunks
         chunks = split_text(text)
 
-        # Button for pin chunk
+        # Button for last message
         buttons = InlineKeyboardMarkup([
             [InlineKeyboardButton("💬 Contact Admin", url="https://t.me/YourAdminUsername")]
         ])
 
-        # Send all chunks normally except last chunk
+        # Send chunks
         for chunk in chunks[:-1]:
             await client.send_message(
                 chat_id=CHANNEL_ID,
@@ -97,7 +100,6 @@ async def nightly_update():
                 disable_web_page_preview=True
             )
 
-        # Send last chunk, pin it
         last_chunk = chunks[-1]
         last_msg = await client.send_message(
             chat_id=CHANNEL_ID,
@@ -108,14 +110,12 @@ async def nightly_update():
         )
         await client.pin_chat_message(CHANNEL_ID, last_msg.message_id, disable_notification=True)
 
-        # Delete pin notification (assume it comes immediately after pinned msg)
-        import asyncio
-        await asyncio.sleep(1)  # wait a second for notification to appear
+        # Delete pin notification
+        await asyncio.sleep(1)
         try:
             await client.delete_messages(CHANNEL_ID, last_msg.message_id + 1)
         except:
             pass
-
 
 # Global user client reference
 TechVJUser: Client | None = None
@@ -192,10 +192,13 @@ class Bot(Client):
         try:
             logging.info("🌐 Starting web server...")
             app = web.AppRunner(await web_server())
-            asyncio.create_task(nightly_update())
             await app.setup()
             await web.TCPSite(app, "0.0.0.0", PORT).start()
             logging.info(f"🌐 Web server running on PORT {PORT}")
+
+            # Start nightly update in background
+            asyncio.create_task(nightly_update())
+
         except Exception as e:
             logging.error(f"❌ Failed to start web server: {e}")
 
